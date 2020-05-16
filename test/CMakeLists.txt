@@ -28,3 +28,8 @@ target_link_libraries(test_imgui_glfw_ogl
   glfw
   ${OGL}
 )
+
+add_executable(test_zexz test_zexz.cpp)
+target_link_libraries(test_zexz
+  zexz
+)

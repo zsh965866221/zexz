@@ -48,6 +48,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(DIR_THIRD_PARTY 3rd-party)
 add_subdirectory(${DIR_THIRD_PARTY})
 
+# add zexz
+add_subdirectory(src)
+
 # add test
 add_subdirectory(test)
 
