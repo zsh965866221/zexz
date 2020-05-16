@@ -1,0 +1,36 @@
+add_subdirectory(filesystem)
+add_subdirectory(gflags)
+add_subdirectory(glfw)
+add_subdirectory(glm)
+add_subdirectory(glog)
+
+# stb
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE stb/)
+
+# imgui
+file(GLOB imgui_source imgui/*.cpp)
+file(GLOB imgui_header imgui/*.h)
+add_library(imgui STATIC
+  ${imgui_source}
+  ${imgui_header}
+)
+target_link_libraries(imgui 
+  ${OGL}
+)
+target_include_directories(imgui PUBLIC imgui/)
+
+add_library(imgui_glfw_ogl STATIC
+  imgui/examples/imgui_impl_opengl3.h
+  imgui/examples/imgui_impl_opengl3.cpp
+  imgui/examples/imgui_impl_glfw.h
+  imgui/examples/imgui_impl_glfw.cpp
+  imgui/examples/libs/gl3w/GL/gl3w.c
+)
+target_link_libraries(imgui_glfw_ogl
+  imgui
+  glfw
+  ${OGL}
+)
+target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/libs/gl3w/)
+target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/)
