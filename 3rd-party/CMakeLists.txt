@@ -4,6 +4,9 @@ add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(glog)
 
+# glad_local
+add_subdirectory(glad_local)
+
 # stb
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE stb/)
@@ -25,12 +28,12 @@ add_library(imgui_glfw_ogl STATIC
   imgui/examples/imgui_impl_opengl3.cpp
   imgui/examples/imgui_impl_glfw.h
   imgui/examples/imgui_impl_glfw.cpp
-  imgui/examples/libs/gl3w/GL/gl3w.c
 )
 target_link_libraries(imgui_glfw_ogl
   imgui
+  glad
   glfw
   ${OGL}
 )
-target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/libs/gl3w/)
+# target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/libs/gl3w/)
 target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/)

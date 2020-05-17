@@ -25,6 +25,7 @@ add_executable(test_imgui_glfw_ogl test_imgui.cpp)
 target_link_libraries(test_imgui_glfw_ogl
   imgui
   imgui_glfw_ogl
+  glad
   glfw
   ${OGL}
 )

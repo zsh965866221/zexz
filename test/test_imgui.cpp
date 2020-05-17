@@ -1,4 +1,4 @@
-#include <GL/gl3w.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
@@ -29,8 +29,7 @@ int main(int, char**) {
   glfwSwapInterval(1);  // Enable vsync
 
   // Initialize OpenGL loader
-  bool err = gl3wInit() != 0;
-  if (err) {
+  if (!gladLoadGL()) {
     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
     return 1;
   }

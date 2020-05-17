@@ -19,3 +19,6 @@
 [submodule "3rd-party/stb"]
 	path = 3rd-party/stb
 	url = https://github.com/nothings/stb
+[submodule "3rd-party/glad"]
+	path = 3rd-party/glad
+	url = https://github.com/Dav1dde/glad
