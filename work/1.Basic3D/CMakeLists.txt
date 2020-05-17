@@ -1,0 +1,13 @@
+add_executable(1.Basic3D 
+  main.cpp
+)
+target_link_libraries(1.Basic3D
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz)
