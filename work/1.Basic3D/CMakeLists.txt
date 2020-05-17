@@ -10,4 +10,5 @@ target_link_libraries(1.Basic3D
   imgui_glfw_ogl
   middle
   stb
-  zexz)
+  zexz
+)

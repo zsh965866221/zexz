@@ -5,6 +5,7 @@
 #include "gflags/gflags.h"
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include "glog/logging.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -33,7 +34,9 @@ static void onDestory();
 
 // Struct
 struct UI {
-
+  float rotate_x;
+  float rotate_y;
+  float distance;
 };
 struct Data {
   Data() {
@@ -54,6 +57,11 @@ struct Data {
 static UI ui;
 static Data data;
 static std::string PATH_RESOURCE = zexz::utils::getResourcesDir();
+
+// args
+DEFINE_string(image, PATH_RESOURCE + "/images/grid.jpg", "image");
+DEFINE_string(vertex, PATH_RESOURCE + "/shaders/basic3d.vs", "vertex");
+DEFINE_string(fragment, PATH_RESOURCE + "/shaders/basic3d.fs", "fragment");
 
 int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
@@ -165,21 +173,22 @@ void glfw_keyboard_callback(GLFWwindow* window) {
 void onInit() {
   // texture
   data.texture = zexz::middle::load_texture(
-    PATH_RESOURCE + "/images/grid.jpg", 
+    FLAGS_image,
     &(data.image_width), 
     &(data.image_height),
     &(data.image_channels));
   // shader
   data.shader.reset(new zexz::middle::Shader(
-    PATH_RESOURCE + "/shaders/basic3d.vs",
-    PATH_RESOURCE + "/shaders/basic3d.fs"));
+    FLAGS_vertex,
+    FLAGS_fragment
+  ));
   // VAO VBO IBO
   float vertices[] = {
-    // positions          // colors           // texture coords
-     1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-     1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-    -1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-    -1.0f,  1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+    // positions           // texture coords
+     1.0f,  1.0f, 0.0f,    1.0f, 1.0f, // top right
+     1.0f, -1.0f, 0.0f,    1.0f, 0.0f, // bottom right
+    -1.0f, -1.0f, 0.0f,    0.0f, 0.0f, // bottom left
+    -1.0f,  1.0f, 0.0f,    0.0f, 1.0f  // top left 
   };
   unsigned int indices[] = {
     0, 1, 3,
@@ -198,25 +207,43 @@ void onInit() {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
   // position
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
-  // color
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
   // texture coord
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
 }
 
 void onGUI() {
-  ImGui::Begin("test");
-  ImGui::Text("hahahahaha");
+  ImGui::Begin("Basic 3D");
+  ImGui::SliderFloat("Rotate X: ", &(ui.rotate_x), 0.0, 360.0);
+  ImGui::SliderFloat("Rotate Y: ", &(ui.rotate_y), 0.0, 360.0);
+  ImGui::SliderFloat("Distance: ", &(ui.distance), -3.0, 3.0);
   ImGui::End();
 }
 
 void onDraw() {
   data.shader->use();
   data.shader->setTexture("texture1", data.texture, 0);
+
+  // basic 3d
+  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 view = glm::lookAt(
+    glm::vec3(0.0, 0.0, -3.0),
+    glm::vec3(0.0, 0.0, 0.0),
+    glm::vec3(0.0, 1.0, 0.0)
+  );
+  glm::mat4 projection = glm::mat4(1.0f);
+  model = glm::rotate(model, glm::radians(ui.rotate_x), glm::vec3(1.0f, 0.0f, 0.0f));
+  model = glm::rotate(model, glm::radians(ui.rotate_y), glm::vec3(0.0f, 1.0f, 0.0f));
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, ui.distance));
+  projection = glm::perspective(
+    glm::radians(45.0f), 
+    static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),
+    0.1f, 
+    100.0f);
+  data.shader->setMat4("MVP", projection * view * model);
+
   glBindVertexArray(data.VAO);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
   data.shader->unuse();
