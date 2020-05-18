@@ -60,7 +60,7 @@ static Data data;
 static std::string PATH_RESOURCE = zexz::utils::getResourcesDir();
 
 // args
-DEFINE_string(image, PATH_RESOURCE + "/images/grid.jpg", "image");
+DEFINE_string(image, PATH_RESOURCE + "/images/f.jpg", "image");
 DEFINE_string(vertex, PATH_RESOURCE + "/shaders/basic3d_fragment.vs", "vertex");
 DEFINE_string(fragment, PATH_RESOURCE + "/shaders/basic3d_fragment.fs", "fragment");
 
@@ -232,6 +232,7 @@ void onDraw() {
 
   // basic 3d
   glm::mat4 model = glm::mat4(1.0f);
+  model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
   glm::mat4 view = glm::lookAt(
     glm::vec3(0.0, 0.0, -2.0),
     glm::vec3(0.0, 0.0, 0.0),
@@ -243,7 +244,9 @@ void onDraw() {
     static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),
     0.1f, 
     100.0f);
-  data.shader->setMat4("PVM", projection * view * model);
+  data.shader->setMat4("model", model);
+  data.shader->setMat4("view", view);
+  data.shader->setMat4("projection", projection);
   data.shader->setFloat("angle_X", ui.rotate_x);
   data.shader->setFloat("angle_Y", ui.rotate_y);
   data.shader->setFloat("distance_plane", ui.distance);

@@ -59,7 +59,7 @@ static Data data;
 static std::string PATH_RESOURCE = zexz::utils::getResourcesDir();
 
 // args
-DEFINE_string(image, PATH_RESOURCE + "/images/grid.jpg", "image");
+DEFINE_string(image, PATH_RESOURCE + "/images/f.jpg", "image");
 DEFINE_string(vertex, PATH_RESOURCE + "/shaders/basic3d.vs", "vertex");
 DEFINE_string(fragment, PATH_RESOURCE + "/shaders/basic3d.fs", "fragment");
 
@@ -216,9 +216,9 @@ void onInit() {
 
 void onGUI() {
   ImGui::Begin("Basic 3D");
-  ImGui::SliderFloat("Rotate X: ", &(ui.rotate_x), 0.0, 360.0);
-  ImGui::SliderFloat("Rotate Y: ", &(ui.rotate_y), 0.0, 360.0);
-  ImGui::SliderFloat("Distance: ", &(ui.distance), -3.0, 3.0);
+  ImGui::SliderFloat("Rotate X", &(ui.rotate_x), 0.0, 360.0);
+  ImGui::SliderFloat("Rotate Y", &(ui.rotate_y), 0.0, 360.0);
+  ImGui::SliderFloat("Distance", &(ui.distance), -3.0, 3.0);
   ImGui::End();
 }
 
@@ -227,13 +227,15 @@ void onDraw() {
   data.shader->setTexture("texture1", data.texture, 0);
 
   // basic 3d
+  glm::vec3 viewPos = glm::vec3(0.0, 0.0, -3.0);
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = glm::lookAt(
-    glm::vec3(0.0, 0.0, -3.0),
+    viewPos,
     glm::vec3(0.0, 0.0, 0.0),
     glm::vec3(0.0, 1.0, 0.0)
   );
   glm::mat4 projection = glm::mat4(1.0f);
+  model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
   model = glm::rotate(model, glm::radians(ui.rotate_x), glm::vec3(1.0f, 0.0f, 0.0f));
   model = glm::rotate(model, glm::radians(ui.rotate_y), glm::vec3(0.0f, 1.0f, 0.0f));
   view = glm::translate(view, glm::vec3(0.0f, 0.0f, ui.distance));
@@ -242,7 +244,13 @@ void onDraw() {
     static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),
     0.1f, 
     100.0f);
-  data.shader->setMat4("MVP", projection * view * model);
+  data.shader->setMat4("model", model);
+  data.shader->setMat4("view", view);
+  data.shader->setMat4("projection", projection);
+  data.shader->setVec3(
+    "norm", 
+    glm::mat3(glm::transpose(glm::inverse(model))) * glm::vec3(0.0f, 0.0f, 1.0f));
+  data.shader->setVec3("viewPos", viewPos);
 
   glBindVertexArray(data.VAO);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
