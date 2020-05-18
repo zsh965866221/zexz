@@ -1,0 +1,14 @@
+add_executable(2.Sphere 
+  main.cpp
+)
+target_link_libraries(2.Sphere
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
