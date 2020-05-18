@@ -59,6 +59,7 @@ struct CameraStruct {
   bool midPressed;
   glm::vec2 mouseMidStart;
   glm::vec2 mouseMidOffset;
+  glm::vec2 mouseMidOffsetTmp;
 };
 
 // static
@@ -175,7 +176,7 @@ void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   cameraStruct.mousePosition = glm::vec2(xpos, ypos);
   if (cameraStruct.midPressed == true) {
-    cameraStruct.mouseMidOffset += (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
+    cameraStruct.mouseMidOffset = cameraStruct.mouseMidOffsetTmp + (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
   }
 }
 void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -191,6 +192,7 @@ void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int 
       cameraStruct.mouseMidStart = cameraStruct.mousePosition;
     } else if (action == GLFW_RELEASE) {
       cameraStruct.midPressed = false;
+      cameraStruct.mouseMidOffsetTmp = cameraStruct.mouseMidOffset;
       cameraStruct.mouseMidStart = glm::vec2(0.0, 0.0);
     }
   }
@@ -263,8 +265,8 @@ void onDraw() {
   model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
   view = glm::translate(view, 
     glm::vec3(
-      -cameraStruct.mouseMidOffset.x / (float)SCREEN_WIDTH * 0.1, 
-      -cameraStruct.mouseMidOffset.y / (float)SCREEN_HEIGHT *0.1, 
+      -cameraStruct.mouseMidOffset.x / (float)SCREEN_WIDTH, 
+      -cameraStruct.mouseMidOffset.y / (float)SCREEN_HEIGHT, 
       -cameraStruct.distance
     )
   );
