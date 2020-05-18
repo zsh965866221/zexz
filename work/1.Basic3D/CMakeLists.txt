@@ -12,3 +12,18 @@ target_link_libraries(1.Basic3D
   stb
   zexz
 )
+
+add_executable(1.Basic3D_fragment
+  main_fragment.cpp
+)
+target_link_libraries(1.Basic3D_fragment
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
