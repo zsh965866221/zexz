@@ -34,9 +34,10 @@ static void onDestory();
 
 // Struct
 struct UI {
-  float rotate_x;
-  float rotate_y;
-  float distance;
+  float Swivel;
+  float Tilt;
+  float Distance;
+  bool Specular;
 };
 struct Data {
   Data() {
@@ -216,9 +217,10 @@ void onInit() {
 
 void onGUI() {
   ImGui::Begin("Basic 3D");
-  ImGui::SliderFloat("Rotate X", &(ui.rotate_x), 0.0, 360.0);
-  ImGui::SliderFloat("Rotate Y", &(ui.rotate_y), 0.0, 360.0);
-  ImGui::SliderFloat("Distance", &(ui.distance), -3.0, 3.0);
+  ImGui::SliderFloat("Swivel", &(ui.Swivel), 0.0, 360.0);
+  ImGui::SliderFloat("Tilt", &(ui.Tilt), 0.0, 360.0);
+  ImGui::SliderFloat("Distance to Image", &(ui.Distance), -3.0, 3.0);
+  ImGui::Checkbox("Specular Highlight", &(ui.Specular));
   ImGui::End();
 }
 
@@ -227,6 +229,7 @@ void onDraw() {
   data.shader->setTexture("texture1", data.texture, 0);
 
   // basic 3d
+  glm::vec3 plane_norm = glm::vec3(0.0f, 0.0f, -1.0f);
   glm::vec3 viewPos = glm::vec3(0.0, 0.0, -3.0);
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = glm::lookAt(
@@ -235,10 +238,13 @@ void onDraw() {
     glm::vec3(0.0, 1.0, 0.0)
   );
   glm::mat4 projection = glm::mat4(1.0f);
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, ui.Distance));
   model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
-  model = glm::rotate(model, glm::radians(ui.rotate_x), glm::vec3(1.0f, 0.0f, 0.0f));
-  model = glm::rotate(model, glm::radians(ui.rotate_y), glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, ui.distance));
+  glm::vec3 lightDir = glm::normalize(
+    glm::reflect(glm::vec3(model * glm::vec4(1.3, 1.3, 0.0, 1.0)) - viewPos, 
+    plane_norm));
+  model = glm::rotate(model, glm::radians(-ui.Tilt), glm::vec3(1.0f, 0.0f, 0.0f));
+  model = glm::rotate(model, glm::radians(-ui.Swivel), glm::vec3(0.0f, 1.0f, 0.0f));
   projection = glm::perspective(
     glm::radians(45.0f), 
     static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),
@@ -249,8 +255,10 @@ void onDraw() {
   data.shader->setMat4("projection", projection);
   data.shader->setVec3(
     "norm", 
-    glm::mat3(glm::transpose(glm::inverse(model))) * glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat3(model) * plane_norm);
   data.shader->setVec3("viewPos", viewPos);
+  data.shader->setVec3("lightDir", lightDir);
+  data.shader->setBool("Specular", ui.Specular);
 
   glBindVertexArray(data.VAO);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
