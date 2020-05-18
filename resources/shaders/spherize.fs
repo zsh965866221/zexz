@@ -16,6 +16,7 @@ uniform sampler2D texture1;
 
 const float epsilon = 1e-5;
 
+/** \brief https://www.desmos.com/calculator/x372tzzlsf */
 void main() {
 	float aspect = TexutreSize.y / TexutreSize.x;
 
