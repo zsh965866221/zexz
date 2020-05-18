@@ -221,7 +221,15 @@ void onGUI() {
   ImGui::Begin("Basic 3D");
   ImGui::SliderFloat("Swivel", &(ui.Swivel), -180.0, 180.0);
   ImGui::SliderFloat("Tilt", &(ui.Tilt), -180.0, 180.0);
-  ImGui::SliderFloat("Distance to Image", &(ui.Distance), -3.0, 3.0);
+  // ImGui::SliderFloat2(
+  //   "Distance to Image", 
+  //   &(ui.Distance), 
+  //   -5.0f * (float)data.image_width / 20.0f, 
+  //   10.0f * (float)data.image_width / 20.0f);
+  ImGui::DragFloat(
+    "Distance to Image", 
+    &(ui.Distance)
+  );
   ImGui::Checkbox("Specular Highlight", &(ui.Specular));
   ImGui::End();
 }
@@ -240,7 +248,7 @@ void onDraw() {
     glm::vec3(0.0, 1.0, 0.0)
   );
   glm::mat4 projection = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, 0.0f, ui.Distance));
+  model = glm::translate(model, glm::vec3(0.0f, 0.0f, ui.Distance / ((float)data.image_width / 20.0)));
   model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
   model = glm::rotate(model, glm::radians(-ui.Tilt), glm::vec3(1.0f, 0.0f, 0.0f));
   model = glm::rotate(model, glm::radians(-ui.Swivel), glm::vec3(0.0f, 1.0f, 0.0f));

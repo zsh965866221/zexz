@@ -240,12 +240,21 @@ void onInit() {
   // texture coord
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+
+  // init gui
+  ui.Center = glm::vec2((float)data.image_width / 2.0, (float)data.image_height / 2.0);
 }
 
 void onGUI() {
   ImGui::Begin("Shperize");
-  ImGui::SliderFloat("Radius", &(ui.Radius), 0.0, 1.0);
-  ImGui::SliderFloat2("Center of Shpere", &(ui.Center[0]), -1.0, 1.0);
+  ImGui::SliderFloat("Radius", &(ui.Radius), 0.0, float(data.image_width));
+  ImGui::SliderFloat2("Center of Shpere", &(ui.Center[0]), 0.0, float(data.image_width));
+  ImGui::End();
+
+  // help
+  ImGui::Begin("Help");
+  ImGui::Text("1. Mouse Scroll for Scale.");
+  ImGui::Text("2. Mouse Middle Button for Move.");
   ImGui::End();
 }
 

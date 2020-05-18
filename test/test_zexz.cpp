@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include "zexz/utils/utils.h"
 

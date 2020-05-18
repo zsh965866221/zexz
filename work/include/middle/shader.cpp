@@ -10,9 +10,9 @@ namespace zexz {
 namespace middle {
 
 Shader::Shader(
-    std::string path_vertex,
-    std::string path_fragment,
-    std::string path_geometry) {
+    const std::string& path_vertex,
+    const std::string& path_fragment,
+    const std::string& path_geometry) {
 
   std::string vertexCode;
   std::string fragmentCode;

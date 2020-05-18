@@ -8,9 +8,13 @@ add_library(middle
 target_link_libraries(middle 
   glad
   gflags
+  glfw
   glm
   glog
+  imgui
+  imgui_glfw_ogl
   stb
+  zexz
 )
 target_include_directories(middle PUBLIC include/)
 

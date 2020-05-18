@@ -19,29 +19,30 @@ const float epsilon = 1e-5;
 /** \brief the function based r, please visit: https://www.desmos.com/calculator/py5yksrcna */
 void main() {
 	float aspect = TexutreSize.y / TexutreSize.x;
+	float radius = Radius / TexutreSize.x;
 
 	vec2 xy = TexCoord * 2.0 - 1.0;
-	vec2 uv = xy - Center;
+	vec2 uv = xy - (Center / TexutreSize - 0.5) * 2.0;
 	uv *= vec2(1.0, aspect);
 
 	float r = length(uv);
 	float theta = atan(uv.y, uv.x);
 	
-	if (r < Radius + epsilon) {
-		float k = r / Radius;
+	if (r < radius  + epsilon) {
+		float k = r / radius;
 		float f = 
 			+ 0.20 * pow(k, 4.0)
 			+ 0.20 * pow(k, 3.0)
 			+ 0.00 * pow(k, 2.0)
 			+ 0.60 * pow(k, 1.0);
-		r = f * Radius;
+		r = f * radius;
 	}
 
 	uv.x = r * cos(theta);
 	uv.y = r * sin(theta);
 
 	xy = uv / vec2(1.0, aspect);
-	xy = xy + Center;
+	xy = xy + (Center / TexutreSize - 0.5) * 2.0;
 	xy = (xy + 1.0) / 2.0;
 	
 	FragColor = texture(texture1, xy);
