@@ -217,8 +217,8 @@ void onInit() {
 
 void onGUI() {
   ImGui::Begin("Basic 3D");
-  ImGui::SliderFloat("Swivel", &(ui.Swivel), 0.0, 360.0);
-  ImGui::SliderFloat("Tilt", &(ui.Tilt), 0.0, 360.0);
+  ImGui::SliderFloat("Swivel", &(ui.Swivel), -180.0, 180.0);
+  ImGui::SliderFloat("Tilt", &(ui.Tilt), -180.0, 180.0);
   ImGui::SliderFloat("Distance to Image", &(ui.Distance), -3.0, 3.0);
   ImGui::Checkbox("Specular Highlight", &(ui.Specular));
   ImGui::End();
@@ -240,9 +240,6 @@ void onDraw() {
   glm::mat4 projection = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(0.0f, 0.0f, ui.Distance));
   model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
-  glm::vec3 lightDir = glm::normalize(
-    glm::reflect(glm::vec3(model * glm::vec4(1.3, 1.3, 0.0, 1.0)) - viewPos, 
-    plane_norm));
   model = glm::rotate(model, glm::radians(-ui.Tilt), glm::vec3(1.0f, 0.0f, 0.0f));
   model = glm::rotate(model, glm::radians(-ui.Swivel), glm::vec3(0.0f, 1.0f, 0.0f));
   projection = glm::perspective(
@@ -257,7 +254,7 @@ void onDraw() {
     "norm", 
     glm::mat3(model) * plane_norm);
   data.shader->setVec3("viewPos", viewPos);
-  data.shader->setVec3("lightDir", lightDir);
+  data.shader->setVec3("lightPos", glm::vec3((float)(data.image_width) / (float)(data.image_height), 1.0, -1.0));
   data.shader->setBool("Specular", ui.Specular);
 
   glBindVertexArray(data.VAO);
