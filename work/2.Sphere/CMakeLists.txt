@@ -12,3 +12,18 @@ target_link_libraries(2.Sphere
   stb
   zexz
 )
+
+add_executable(2.Sphere_application
+  main_application.cpp
+)
+target_link_libraries(2.Sphere_application
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)

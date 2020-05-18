@@ -221,11 +221,6 @@ void onGUI() {
   ImGui::Begin("Basic 3D");
   ImGui::SliderFloat("Swivel", &(ui.Swivel), -180.0, 180.0);
   ImGui::SliderFloat("Tilt", &(ui.Tilt), -180.0, 180.0);
-  // ImGui::SliderFloat2(
-  //   "Distance to Image", 
-  //   &(ui.Distance), 
-  //   -5.0f * (float)data.image_width / 20.0f, 
-  //   10.0f * (float)data.image_width / 20.0f);
   ImGui::DragFloat(
     "Distance to Image", 
     &(ui.Distance)

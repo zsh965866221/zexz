@@ -34,3 +34,17 @@ add_executable(test_zexz test_zexz.cpp)
 target_link_libraries(test_zexz
   zexz
 )
+
+add_executable(test_application test_application.cpp)
+target_link_libraries(test_application
+  glad
+  gflags
+  glfw
+  glm
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
