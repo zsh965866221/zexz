@@ -6,12 +6,22 @@ class SimpleApplication: public zsh::middle::Application {
 private:
   // Struct
   struct UI {
+    UI(): 
+      Radius(0.0f), 
+      Center(glm::vec2(0.0f, 0.0f)) {}
     float Radius;
     glm::vec2 Center;
   };
   struct Data {
-    Data() {
-      shader.reset(nullptr);
+    Data():
+      shader(nullptr),
+      texture(0),
+      image_width(0),
+      image_height(0),
+      image_channels(0),
+      VAO(0),
+      VBO(0),
+      IBO(0) {
     }
 
     std::unique_ptr<zexz::middle::Shader> shader;
@@ -25,6 +35,15 @@ private:
   };
 
   struct CameraStruct {
+    CameraStruct():
+      distance(0.0f),
+      mousePosition(glm::vec2(0.0f, 0.0f)),
+      midPressed(false),
+      mouseMidStart(glm::vec2(0.0f, 0.0f)),
+      mouseMidOffset(glm::vec2(0.0f, 0.0f)),
+      mouseMidOffsetTmp(glm::vec2(0.0f, 0.0f)) {
+    }
+
     float distance;
     glm::vec2 mousePosition;
     bool midPressed;
@@ -200,6 +219,7 @@ int main(int argc, char* argv[]) {
   FLAGS_alsologtostderr = true;
 
   SimpleApplication app;
+  app.init();
   app.run();
 }
 

@@ -65,6 +65,7 @@ DEFINE_string(vertex, PATH_RESOURCE + "/shaders/basic3d.vs", "vertex");
 DEFINE_string(fragment, PATH_RESOURCE + "/shaders/basic3d.fs", "fragment");
 
 int main(int argc, char* argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = true;
 

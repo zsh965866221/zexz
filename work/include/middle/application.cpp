@@ -29,15 +29,17 @@ Application::Application(
       version_major(version_major),
       version_minor(version_minor),
       background_color(background_color),
-      window(nullptr) {
+      window(nullptr),
+      func_onInit(nullptr),
+      func_onGUI(nullptr),
+      func_onDraw(nullptr),
+      func_onDestory(nullptr),
+      func_framebuffer_size_callback(nullptr),
+      func_mouse_callback(nullptr),
+      func_scroll_callback(nullptr),
+      func_key_callback(nullptr),
+      func_mouse_button_callback(nullptr) {
   resource_dir = zexz::utils::getResourcesDir();
-  bool ret;
-  ret = initGLFW();
-  CHECK_EQ(ret, true);
-  ret = initIMGUI();
-  CHECK_EQ(ret, true);
-  // // on init
-  // onInit();
 }
 
 Application::Application(): 
@@ -50,6 +52,9 @@ Application::Application():
 Application::~Application() {
   cleanIMGUI();
   onDestory();
+  if (func_onDestory != nullptr) {
+    func_onDestory();
+  }
   glfwDestroyWindow(window);
   glfwTerminate();
 }
@@ -104,8 +109,23 @@ bool Application::initIMGUI() {
   return true;
 }
 
-bool Application::run() {
+bool Application::init() {
+  bool ret;
+  ret = initGLFW();
+  CHECK_EQ(ret, true);
+  ret = initIMGUI();
+  CHECK_EQ(ret, true);
+
+  // init
   onInit();
+  if (func_onInit != nullptr) {
+    func_onInit();
+  }
+
+  return ret;
+}
+
+bool Application::run() {
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
@@ -115,6 +135,9 @@ bool Application::run() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     onGUI();
+    if(func_onGUI != nullptr) {
+      func_onGUI();
+    }
     ImGui::Render();
 
     glClearColor(
@@ -129,6 +152,9 @@ bool Application::run() {
 
     // draw
     onDraw();
+    if (func_onDraw != nullptr) {
+      func_onDraw();
+    }
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     // swap buffer
@@ -190,22 +216,37 @@ void glfw_error_callback(const int error, const char* description) {
 void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
   app->framebuffer_size_callback(width, height);
+  if (app->func_framebuffer_size_callback != nullptr) {
+    app->func_framebuffer_size_callback(width, height);
+  }
 }
 void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
   Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
   app->mouse_callback(static_cast<float>(xpos), static_cast<float>(ypos));
+  if (app->func_mouse_callback != nullptr) {
+    app->func_mouse_callback(static_cast<float>(xpos), static_cast<float>(ypos));
+  }
 }
 void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
   Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
   app->scroll_callback(static_cast<float>(xoffset), static_cast<float>(yoffset));
+  if (app->func_scroll_callback != nullptr) {
+    app->func_scroll_callback(static_cast<float>(xoffset), static_cast<float>(yoffset));
+  }
 }
 void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
   Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
   app->key_callback(key, scancode, action, mods);
+  if (app->func_key_callback != nullptr) {
+    app->func_key_callback(key, scancode, action, mods);
+  }
 }
 void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
   Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
   app->mouse_button_callback(button, action, mods);
+  if (app->func_mouse_button_callback != nullptr) {
+    app->func_mouse_button_callback(button, action, mods);
+  }
 }
 
 } // namespace middle

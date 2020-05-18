@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -33,6 +34,7 @@ public:
   virtual ~Application();
 
 public:
+  virtual bool init();
   virtual bool run();
   
 public:
@@ -48,6 +50,16 @@ public:
   virtual void scroll_callback(float xoffset, float yoffset);
   virtual void key_callback(int key, int scancode, int action, int mods);
   virtual void mouse_button_callback(int button, int action, int mods);
+
+public:
+  void register_onInit(std::function<bool(void)> func);
+  void register_onGUI(std::function<bool(void)> func);
+  void register_onDraw(std::function<bool(void)> func);
+  void register_onDestory(std::function<bool(void)> func);
+  void register_framebuffer_size_callback(std::function<void(int width, int height)> func);
+  void register_mouse_callback(std::function<void(float xpos, float ypos)> func);
+  void register_scroll_callback(std::function<void(int key, int scancode, int action, int mods)> func);
+  void register_key_callback(std::function<void(int button, int action, int mods)> func);
 
 protected:
   bool initGLFW();
@@ -70,6 +82,18 @@ protected:
 
   float time;
   int frame;
+
+public:
+  std::function<bool(void)> func_onInit; 
+  std::function<bool(void)> func_onGUI; 
+  std::function<bool(void)> func_onDraw; 
+  std::function<bool(void)> func_onDestory; 
+
+  std::function<void(int width, int height)> func_framebuffer_size_callback;
+  std::function<void(float xpos, float ypos)> func_mouse_callback;
+  std::function<void(float xoffset, float yoffset)> func_scroll_callback;
+  std::function<void(int key, int scancode, int action, int mods)> func_key_callback;
+  std::function<void(int button, int action, int mods)> func_mouse_button_callback;
 };
 
 } // namespace middle

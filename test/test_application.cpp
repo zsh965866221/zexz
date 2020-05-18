@@ -7,5 +7,6 @@ using namespace zexz::middle;
 
 int main() {
   Application app;
+  app.init();
   app.run();
 }
