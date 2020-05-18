@@ -19,7 +19,8 @@ static void glfw_error_callback(int error, const char* description);
 static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos);
 static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static void glfw_keyboard_callback(GLFWwindow* window);
+static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 // setting
 static unsigned int SCREEN_WIDTH = 1280;
@@ -52,9 +53,18 @@ struct Data {
   GLuint IBO;
 };
 
+struct CameraStruct {
+  float distance;
+  glm::vec2 mousePosition;
+  bool midPressed;
+  glm::vec2 mouseMidStart;
+  glm::vec2 mouseMidOffset;
+};
+
 // static
 static UI ui;
 static Data data;
+static CameraStruct cameraStruct;
 static std::string PATH_RESOURCE = zexz::utils::getResourcesDir();
 
 // args
@@ -83,6 +93,8 @@ int main(int argc, char* argv[]) {
   glfwSetErrorCallback(glfw_error_callback);
   glfwSetCursorPosCallback(window, glfw_mouse_callback);
   glfwSetScrollCallback(window, glfw_scroll_callback);
+  glfwSetKeyCallback(window, glfw_key_callback);
+  glfwSetMouseButtonCallback(window, glfw_mouse_button_callback);
 
   // load glad opengl interface
   if (!gladLoadGL()) {
@@ -110,7 +122,6 @@ int main(int argc, char* argv[]) {
   // loop
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
-    glfw_keyboard_callback(window);
 
     // ImGui
     ImGui_ImplOpenGL3_NewFrame();
@@ -162,13 +173,27 @@ void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-
+  cameraStruct.mousePosition = glm::vec2(xpos, ypos);
+  if (cameraStruct.midPressed == true) {
+    cameraStruct.mouseMidOffset += (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
+  }
 }
 void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-
+  cameraStruct.distance += ((float)yoffset * 0.1f);
 }
-void glfw_keyboard_callback(GLFWwindow* window) {
-
+void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  
+}
+void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+  if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+    if (action == GLFW_PRESS) {
+      cameraStruct.midPressed = true;
+      cameraStruct.mouseMidStart = cameraStruct.mousePosition;
+    } else if (action == GLFW_RELEASE) {
+      cameraStruct.midPressed = false;
+      cameraStruct.mouseMidStart = glm::vec2(0.0, 0.0);
+    }
+  }
 }
 
 void onInit() {
@@ -236,6 +261,13 @@ void onDraw() {
   );
   glm::mat4 projection = glm::mat4(1.0f);
   model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
+  view = glm::translate(view, 
+    glm::vec3(
+      -cameraStruct.mouseMidOffset.x / (float)SCREEN_WIDTH * 0.1, 
+      -cameraStruct.mouseMidOffset.y / (float)SCREEN_HEIGHT *0.1, 
+      -cameraStruct.distance
+    )
+  );
   projection = glm::perspective(
     glm::radians(45.0f), 
     static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),

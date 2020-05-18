@@ -16,7 +16,7 @@ uniform sampler2D texture1;
 
 const float epsilon = 1e-5;
 
-/** \brief https://www.desmos.com/calculator/x372tzzlsf */
+/** \brief the function based r, please visit: https://www.desmos.com/calculator/py5yksrcna */
 void main() {
 	float aspect = TexutreSize.y / TexutreSize.x;
 
@@ -29,18 +29,11 @@ void main() {
 	
 	if (r < Radius + epsilon) {
 		float k = r / Radius;
-
-		float f;
-		if (k < 0.76) {
-			f = 1.0 - sqrt(1.0 - k);
-		} else {
-			f = + 0.45 * pow(k, 5.0)
-					+ 0.30 * pow(k, 4.0)
-					- 0.50 * pow(k, 3.0)
-					+ 0.30 * pow(k, 2.0)
-					+ 0.45 * pow(k, 1.0);
-		}
-
+		float f = 
+			+ 0.20 * pow(k, 4.0)
+			+ 0.20 * pow(k, 3.0)
+			+ 0.00 * pow(k, 2.0)
+			+ 0.60 * pow(k, 1.0);
 		r = f * Radius;
 	}
 
