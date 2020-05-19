@@ -3,6 +3,7 @@ add_subdirectory(gflags)
 add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(glog)
+add_subdirectory(SDL)
 
 # glad_local
 add_subdirectory(glad_local)
@@ -35,5 +36,18 @@ target_link_libraries(imgui_glfw_ogl
   glfw
   ${OGL}
 )
-# target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/libs/gl3w/)
 target_include_directories(imgui_glfw_ogl PUBLIC imgui/examples/)
+
+add_library(imgui_sdl_ogl STATIC
+  imgui/examples/imgui_impl_opengl3.h
+  imgui/examples/imgui_impl_opengl3.cpp
+  imgui/examples/imgui_impl_sdl.h
+  imgui/examples/imgui_impl_sdl.cpp
+)
+target_link_libraries(imgui_sdl_ogl
+  imgui
+  glad
+  SDL2-static
+  ${OGL}
+)
+target_include_directories(imgui_sdl_ogl PUBLIC imgui/examples/)

@@ -22,3 +22,6 @@
 [submodule "3rd-party/glad"]
 	path = 3rd-party/glad
 	url = https://github.com/Dav1dde/glad
+[submodule "3rd-party/SDL"]
+	path = 3rd-party/SDL
+	url = https://github.com/SDL-mirror/SDL

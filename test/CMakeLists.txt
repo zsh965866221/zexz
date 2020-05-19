@@ -30,6 +30,16 @@ target_link_libraries(test_imgui_glfw_ogl
   ${OGL}
 )
 
+add_executable(test_imgui_sdl_ogl test_sdl2.cpp)
+target_link_libraries(test_imgui_sdl_ogl
+  imgui
+  imgui_sdl_ogl
+  glad
+  SDL2-static
+  SDL2main
+  ${OGL}
+)
+
 add_executable(test_zexz test_zexz.cpp)
 target_link_libraries(test_zexz
   zexz
