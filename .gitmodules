@@ -25,3 +25,6 @@
 [submodule "3rd-party/SDL"]
 	path = 3rd-party/SDL
 	url = https://github.com/SDL-mirror/SDL
+[submodule "3rd-party/assimp"]
+	path = 3rd-party/assimp
+	url = https://github.com/assimp/assimp

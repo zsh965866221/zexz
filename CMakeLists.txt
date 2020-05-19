@@ -24,7 +24,7 @@ endif()
 
 # disable specific warning
 if (MSVC) 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4127 /wd4189 /wd4459 /wd4100 /wd4706")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4127 /wd4189 /wd4459 /wd4100 /wd4706 /wd4819")
 endif()
 
 # libs

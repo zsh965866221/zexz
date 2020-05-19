@@ -1,3 +1,4 @@
+add_subdirectory(assimp)
 add_subdirectory(filesystem)
 add_subdirectory(gflags)
 add_subdirectory(glfw)
