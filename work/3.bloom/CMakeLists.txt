@@ -1,0 +1,14 @@
+add_executable(3.Bloom
+  main_application.cpp
+)
+target_link_libraries(3.Bloom
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
