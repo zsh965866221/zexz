@@ -160,6 +160,7 @@ public:
       );
       glm::mat4 projection = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
+      view = glm::rotate(view, animation.time * 2.0f, glm::vec3(0.0, 0.0, 1.0));
       view = glm::translate(view, 
         glm::vec3(
           -cameraStruct.mouseMidOffset.x / (float)window_width, 

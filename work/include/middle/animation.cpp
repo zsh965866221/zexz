@@ -7,25 +7,19 @@
 namespace zexz {
 namespace middle {
 
-
-float Animation::now() {
-  auto t = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
-  return static_cast<float>((t - objectTime).count()) / 1000000.0f;
-}
-
 Animation::Animation(float maxTime):
     time(0.0f),
-    currTime(now()),
+    currTime(0.0),
     maxTime(maxTime),
-    status(AnimationStatus_Stoped) {
-  objectTime = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
+    status(AnimationStatus_Stoped),
+    interrupted(false) {
 }
 
 Animation::Animation():
   Animation(10.0f) {}
 
 void Animation::start() {
-  currTime = now();
+  currTime = timer.delta();
   time = 0.0;
   status = AnimationStatus_Runing;
 }
@@ -51,7 +45,7 @@ void Animation::stop() {
 }
 
 void Animation::update() {
-  float t = now();
+  float t = timer.delta();
   switch (status)
   {
   case AnimationStatus_Runing:
@@ -65,7 +59,7 @@ void Animation::update() {
     break;
   }
   currTime = t;
-  if (time > maxTime - utils::EPSILON_FLOAT) {
+  if (interrupted == true && time > maxTime - utils::EPSILON_FLOAT) {
     time = 0.0f;
   }
 }

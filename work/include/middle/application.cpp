@@ -129,11 +129,17 @@ bool Application::run() {
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
+
+    // timer and frame
+    time = timer.delta();
+    frame++;
+    animation.update();
     
     //ImGui
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    onGUIAnimation();
     onGUI();
     if(func_onGUI != nullptr) {
       func_onGUI();
@@ -202,6 +208,24 @@ void Application::key_callback(int key, int scancode, int action, int mods) {
 }
 void Application::mouse_button_callback(int button, int action, int mods) {
 
+}
+
+void Application::onGUIAnimation() {
+  ImGui::Begin("Animation");
+  ImGui::Text("Current Time: %.3fs", animation.time);
+  ImGui::Checkbox("Interrupted", &(animation.interrupted));
+  if (ImGui::Button("Start")) {
+    animation.start();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Pause")) {
+    animation.pause();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Stop")) {
+    animation.stop();
+  }
+  ImGui::End();
 }
 
 void glfw_error_callback(const int error, const char* description) {

@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include "middle/timer.h"
+
 namespace zexz {
 namespace middle {
 
@@ -26,11 +28,10 @@ public:
   float maxTime;
   float currTime;
   AnimationStatus status;
+  bool interrupted;
 
 private:
-  typedef std::chrono::time_point<std::chrono::system_clock,std::chrono::microseconds> TimePoint;
-  TimePoint objectTime;
-  float now();
+  Timer timer;
 };
 
 } // namespace middle

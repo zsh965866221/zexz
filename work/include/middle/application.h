@@ -14,8 +14,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "middle/animation.h"
 #include "middle/shader.h"
 #include "middle/texture.h"
+#include "middle/timer.h"
 #include "zexz/utils/utils.h"
 
 namespace zexz {
@@ -66,8 +68,10 @@ protected:
   bool initGLFW();
   bool initIMGUI();
   bool cleanIMGUI();
-
   void error_callback(int error, const char* description);
+
+private:
+  void onGUIAnimation();
 
 protected:
   std::string window_name;
@@ -95,6 +99,12 @@ public:
   std::function<void(float xoffset, float yoffset)> func_scroll_callback;
   std::function<void(int key, int scancode, int action, int mods)> func_key_callback;
   std::function<void(int button, int action, int mods)> func_mouse_button_callback;
+
+public:
+  Animation animation;
+
+private:
+  Timer timer;
 };
 
 } // namespace middle
