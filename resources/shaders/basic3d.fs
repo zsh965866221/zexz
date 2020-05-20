@@ -17,7 +17,6 @@ uniform vec3 lightPos;
 
 uniform bool Specular;
 
-// const vec3 lightPos = vec3(1.0, 1.0, -1.0);
 const vec3 lightColor = vec3(1.0, 1.0, 1.0);
 const float shininess = 64.0;
 

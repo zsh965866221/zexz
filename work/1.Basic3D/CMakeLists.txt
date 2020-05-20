@@ -27,3 +27,18 @@ target_link_libraries(1.Basic3D_fragment
   stb
   zexz
 )
+
+add_executable(1.Basic3D_vertex
+  main_vertex.cpp
+)
+target_link_libraries(1.Basic3D_vertex
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)

@@ -1,5 +1,7 @@
 #include "middle/application.h"
 
+#include <iostream>
+
 namespace zsh = zexz;
 
 class SimpleApplication: public zsh::middle::Application {
@@ -7,10 +9,14 @@ private:
   // Struct
   struct UI {
     UI(): 
-      Radius(0.0f), 
-      Center(glm::vec2(0.0f, 0.0f)) {}
-    float Radius;
-    glm::vec2 Center;
+      Swivel(0.0f),
+      Tilt(0.0f),
+      Distance(0.0f),
+      Specular(false) {}
+      float Swivel;
+      float Tilt;
+      float Distance;
+      bool Specular;
   };
   struct Data {
     Data():
@@ -23,7 +29,6 @@ private:
       VBO(0),
       IBO(0) {
     }
-
     std::unique_ptr<zexz::middle::Shader> shader;
     GLuint texture;
     int image_width;
@@ -62,9 +67,9 @@ public:
 public:
   bool onInit() {
     // args
-    path_image = resource_dir + "/images/grid.jpg";
-    path_vertex = resource_dir + "/shaders/Spherize/spherize.vs";
-    path_fragment = resource_dir + "/shaders/Spherize/spherize.fs";
+    std::string path_image = resource_dir + "/images/f.jpg";
+    std::string path_vertex = resource_dir + "/shaders/Basic3D/basic3d.vs";
+    std::string path_fragment = resource_dir + "/shaders/Basic3D/basic3d.fs";
     // texture
     data.texture = zexz::middle::load_texture(
       path_image,
@@ -108,15 +113,20 @@ public:
     glEnableVertexAttribArray(1);
 
     // init gui
-    ui.Center = glm::vec2((float)data.image_width / 2.0, (float)data.image_height / 2.0);
+    0;
 
     return true;
   }
 
   bool onGUI() {
-    ImGui::Begin("Shperize");
-    ImGui::SliderFloat("Radius", &(ui.Radius), 0.0f, float(data.image_width) / 2.0f);
-    ImGui::DragFloat2("Center of Shpere", &(ui.Center[0]));
+    ImGui::Begin("Basic 3D");
+    ImGui::SliderFloat("Swivel", &(ui.Swivel), -180.0, 180.0);
+    ImGui::SliderFloat("Tilt", &(ui.Tilt), -180.0, 180.0);
+    ImGui::DragFloat(
+      "Distance to Image", 
+      &(ui.Distance)
+    );
+    ImGui::Checkbox("Specular Highlight", &(ui.Specular));
     ImGui::End();
 
     // help
@@ -131,9 +141,14 @@ public:
   bool onDraw() {
     CHECK_NOTNULL(data.shader);
 
-    { // draw
+    { // draw main
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glViewport(0, 0, window_width, window_height);
+      glEnable(GL_DEPTH_TEST);
+      glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       data.shader->use();
-      data.shader->setTexture("texture1", data.texture, 0);
 
       // MVP
       glm::vec3 viewPos = glm::vec3(0.0, 0.0, -2.0);
@@ -171,14 +186,16 @@ public:
 
       data.shader->setVec2("uTextureSize1", glm::vec2(data.image_width, data.image_height));
 
-      // parameter
-      data.shader->setFloat("uRadius", ui.Radius);
-      data.shader->setVec2("uCenter", ui.Center);
-  
+      // uniform
+      data.shader->setFloat("uTilt", ui.Tilt);
+      data.shader->setFloat("uSwivel", ui.Swivel);
+      data.shader->setFloat("uDistance", ui.Distance);
+      data.shader->setBool("uSpecular", ui.Specular);
+
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
       data.shader->unuse();
-
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     return true;
@@ -221,13 +238,10 @@ private:
   UI ui;
   Data data;
   CameraStruct cameraStruct;
-
-  std::string path_image;
-  std::string path_vertex;
-  std::string path_fragment;
 };
 
 int main(int argc, char* argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = true;
 
