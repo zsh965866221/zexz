@@ -1,0 +1,14 @@
+add_executable(0.Template
+  main.cpp
+)
+target_link_libraries(0.Template
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)

@@ -7,7 +7,8 @@ layout (location = 1) in vec2 aTexCoord1;
 
 uniform mat4 uMVPMatrix;
 uniform mat4 uTexuvMat1;
-uniform vec2 uTextureSize1;
+uniform float uTextureWidth1;
+uniform float uTextureHeight1;
 
 uniform float uSwivel;
 uniform float uTilt;

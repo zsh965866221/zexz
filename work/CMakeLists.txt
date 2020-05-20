@@ -18,6 +18,7 @@ target_link_libraries(middle
 )
 target_include_directories(middle PUBLIC include/)
 
+add_subdirectory(0.Template)
 add_subdirectory(1.Basic3D)
 add_subdirectory(2.Sphere)
 add_subdirectory(3.Bloom)

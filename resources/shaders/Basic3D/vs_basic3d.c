@@ -3,7 +3,9 @@ attribute vec2 aTexCoord1;
 
 uniform highp mat4 uMVPMatrix;
 uniform highp mat4 uTexuvMat1;
-uniform highp vec2 uTextureSize1;
+uniform highp vec2 u_viewSize;
+uniform highp float uTextureWidth1;
+uniform highp float uTextureHeight1;
 
 uniform highp float uSwivel;
 uniform highp float uTilt;

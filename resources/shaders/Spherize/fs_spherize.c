@@ -12,16 +12,16 @@ uniform sampler2D uBitmap1;
 
 varying vec2 vTexCoord1;
 
-
 uniform float uRadius;
 uniform vec2 uCenter;
-uniform vec2 uTextureSize1;
-
+uniform float uTextureWidth1;
+uniform float uTextureHeight1;
 
 const float epsilon = 1e-5;
 
 /** \brief the function based r, please visit: https://www.desmos.com/calculator/py5yksrcna */
 void main() {
+	vec2 uTextureSize = vec2(uTextureWidth1, uTextureHeight1);
 	float aspect = uTextureSize.y / uTextureSize.x;
 	float radius = uRadius / (uTextureSize.x / 2.0);
 

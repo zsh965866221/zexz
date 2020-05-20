@@ -58,3 +58,9 @@ target_link_libraries(test_application
   stb
   zexz
 )
+
+add_executable(test_animation test_animation.cpp)
+target_link_libraries(test_animation
+  middle
+  zexz
+)

@@ -21,11 +21,12 @@
 namespace zexz {
 namespace middle {
 static const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 class Application {
 public: 
   Application(
     const std::string& window_name, 
-    const int window_width, 
+    const int window_width,
     const int window_height,
     const int version_major = 3,
     const int version_minor = 3,

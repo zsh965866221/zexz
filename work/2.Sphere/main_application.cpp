@@ -169,7 +169,8 @@ public:
 
       data.shader->setTexture("uBitmap1", data.texture, 0);
 
-      data.shader->setVec2("uTextureSize1", glm::vec2(data.image_width, data.image_height));
+      data.shader->setFloat("uTextureWidth1", (float)data.image_width);
+      data.shader->setFloat("uTextureHeight1", (float)data.image_height);
 
       // parameter
       data.shader->setFloat("uRadius", ui.Radius);
