@@ -1,13 +1,14 @@
-add_subdirectory(assimp)
 add_subdirectory(filesystem)
 add_subdirectory(gflags)
 add_subdirectory(glfw)
 add_subdirectory(glm)
+# set glog
+set(CXX_FLAGS
+  -DWITH_GFLAGS = FALSE
+  -DWITH_UNWIND = FALSE
+)
 add_subdirectory(glog)
 add_subdirectory(SDL)
-
-# glad_local
-add_subdirectory(glad_local)
 
 # set assimp
 set(CXX_FLAGS
@@ -17,12 +18,10 @@ set(CXX_FLAGS
   -DASSIMP_COVERALLS = FALSE
   -DASSIMP_INSTALL = FALSE
 )
+add_subdirectory(assimp)
 
-# set glog
-set(CXX_FLAGS
-  -DWITH_GFLAGS = FALSE
-  -DWITH_UNWIND = FALSE
-)
+# glad_local
+add_subdirectory(glad_local)
 
 # stb
 add_library(stb INTERFACE)
