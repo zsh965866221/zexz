@@ -160,7 +160,7 @@ public:
       );
       glm::mat4 projection = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
-      view = glm::rotate(view, animation.time * 2.0f, glm::vec3(0.0, 0.0, 1.0));
+      model = glm::rotate(model, animation.timer.time * 1.0f, glm::vec3(0.0, 0.0, 1.0));
       view = glm::translate(view, 
         glm::vec3(
           -cameraStruct.mouseMidOffset.x / (float)window_width, 
@@ -203,7 +203,7 @@ public:
     return true;
   }
 
-  bool onDestory() {
+  bool onDestroy() {
     glDeleteVertexArrays(1, &(data.VAO));
     glDeleteBuffers(1, &(data.VBO));
     glDeleteBuffers(1, &(data.IBO));
@@ -211,29 +211,60 @@ public:
     return true;
   }
 
-  void mouse_callback(float xpos, float ypos) {
-    cameraStruct.mousePosition = glm::vec2(xpos, ypos);
+  void onMouseMotion(const SDL_Event* event) {
+    int x = event->motion.x;
+    int y = event->motion.y;
+
+    cameraStruct.mousePosition = glm::vec2(x, y);
     if (cameraStruct.midPressed == true) {
       cameraStruct.mouseMidOffset = cameraStruct.mouseMidOffsetTmp + (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
     }
   }
-  void scroll_callback(float xoffset, float yoffset) {
-    cameraStruct.distance += ((float)yoffset * 0.1f);
-  }
-  void key_callback(int key, int scancode, int action, int mods) {
 
-  }
-  void mouse_button_callback(int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
-      if (action == GLFW_PRESS) {
+  void onMouseButton(const SDL_Event* event) {
+    if (event->button.button == SDL_BUTTON_MIDDLE) {
+      if (event->type == SDL_MOUSEBUTTONDOWN) {
         cameraStruct.midPressed = true;
         cameraStruct.mouseMidStart = cameraStruct.mousePosition;
-      } else if (action == GLFW_RELEASE) {
+      } else if (event->type == SDL_MOUSEBUTTONUP) {
         cameraStruct.midPressed = false;
         cameraStruct.mouseMidOffsetTmp = cameraStruct.mouseMidOffset;
         cameraStruct.mouseMidStart = glm::vec2(0.0, 0.0);
       }
+    }
   }
+
+  void onKeyButton(const SDL_Event* event) {
+    
+  }
+
+  void onMouseWheel(const SDL_Event* event) {
+    cameraStruct.distance += ((float)event->wheel.y * 0.1f);
+  }
+
+  bool onEvent(const SDL_Event* event) {
+    switch (event->type) {
+    case SDL_MOUSEMOTION:
+      onMouseMotion(event);
+      break;
+    case SDL_MOUSEBUTTONDOWN:
+      onMouseButton(event);
+      break;
+    case SDL_MOUSEBUTTONUP:
+      onMouseButton(event);
+      break;
+    case SDL_KEYDOWN:
+      onKeyButton(event);
+      break;
+    case SDL_KEYUP:
+      onKeyButton(event);
+    case SDL_MOUSEWHEEL:
+      onMouseWheel(event);
+      break;
+    default:
+      break;
+    }
+    return true;
   }
 
 private:
@@ -250,6 +281,7 @@ int main(int argc, char* argv[]) {
   SimpleApplication app;
   app.init();
   app.run();
+  return 0;
 }
 
 

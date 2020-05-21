@@ -4,6 +4,7 @@
 
 namespace zexz {
 namespace middle {
+namespace utils {
 
 typedef std::chrono::time_point<std::chrono::system_clock,std::chrono::microseconds> TimePointMicro;
 
@@ -19,5 +20,6 @@ private:
   TimePointMicro objectTime;
 };
 
+} //namespace utils
 } // namespace middle
 } // namespace zexz

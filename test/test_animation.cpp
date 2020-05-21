@@ -4,10 +4,10 @@
 #include <iostream>
 #include <thread>
 
-using namespace zexz::middle;
+using namespace zexz::middle::animation;
 
 int main() {
-  Animation animation;
+  Timer animation;
   animation.start();
   for (int i = 0; i < 100; i++) {
     animation.update();

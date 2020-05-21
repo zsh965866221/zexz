@@ -9,13 +9,6 @@
 namespace zexz {
 namespace middle {
 
-static void glfw_error_callback(int error, const char* description);
-static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
-static void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos);
-static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-
 Application::Application(
     const std::string& window_name, 
     const int window_width, 
@@ -31,66 +24,69 @@ Application::Application(
       background_color(background_color),
       window(nullptr),
       func_onInit(nullptr),
+      func_onEvent(nullptr),
       func_onGUI(nullptr),
       func_onDraw(nullptr),
-      func_onDestory(nullptr),
-      func_framebuffer_size_callback(nullptr),
-      func_mouse_callback(nullptr),
-      func_scroll_callback(nullptr),
-      func_key_callback(nullptr),
-      func_mouse_button_callback(nullptr) {
+      func_onDestroy(nullptr) {
   resource_dir = zexz::utils::getResourcesDir();
 }
 
 Application::Application(): 
     Application(
       "zexz",
-      1080,
+      1230,
       960
     ) {}
 
 Application::~Application() {
   cleanIMGUI();
-  onDestory();
-  if (func_onDestory != nullptr) {
-    func_onDestory();
+  onDestroy();
+  if (func_onDestroy != nullptr) {
+    func_onDestroy(this);
   }
-  glfwDestroyWindow(window);
-  glfwTerminate();
+  SDL_GL_DeleteContext(gl_context);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
 }
-bool Application::initGLFW() {
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version_major);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, version_minor);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  window = glfwCreateWindow(
-    window_width,
-    window_height,
-    window_name.c_str(),
-    nullptr,
-    nullptr
-  );
-  if (window == nullptr) {
-    LOG(ERROR) << "[ERROR]: Failed to create GLFW window" << std::endl;
-    glfwTerminate();
+bool Application::initSDL() {
+  if (SDL_Init(
+        SDL_INIT_VIDEO | 
+        SDL_INIT_AUDIO |
+        SDL_INIT_TIMER |
+        SDL_INIT_GAMECONTROLLER) != 0) {
+    LOG(ERROR) << "[ERROR]: SDL init ERROR: " << SDL_GetError() << std::endl;
     return false;
   }
 
-  glfwMakeContextCurrent(window);
-  glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version_major);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, version_minor);
 
-  glfwSetErrorCallback(glfw_error_callback);
-  glfwSetFramebufferSizeCallback(window, glfw_framebuffer_size_callback);
-  glfwSetCursorPosCallback(window, glfw_mouse_callback);
-  glfwSetScrollCallback(window, glfw_scroll_callback);
-  glfwSetKeyCallback(window, glfw_key_callback);
-  glfwSetMouseButtonCallback(window, glfw_mouse_button_callback);
+  // Create window with graphics context
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  SDL_WindowFlags window_flags = 
+    (SDL_WindowFlags)(
+      SDL_WINDOW_OPENGL | 
+      SDL_WINDOW_RESIZABLE | 
+      SDL_WINDOW_ALLOW_HIGHDPI);
+  window = SDL_CreateWindow(
+    window_name.c_str(), 
+    SDL_WINDOWPOS_CENTERED, 
+    SDL_WINDOWPOS_CENTERED, 
+    window_width,
+    window_height,  
+    window_flags);
+  gl_context = SDL_GL_CreateContext(window);
+  SDL_GL_MakeCurrent(window, gl_context);
+  SDL_GL_SetSwapInterval(1); // Enable vsync
 
   // load glad opengl interface
   if (!gladLoadGL()) {
     LOG(ERROR) << "[ERROR]: Failed to init glad opengl interface" << std::endl;
-    glfwTerminate();
+    SDL_Quit();
     return false;
   }
   return true;
@@ -100,18 +96,17 @@ bool Application::initIMGUI() {
   // init IMGUI
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
   // style
   ImGui::StyleColorsDark();
   // render
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
   ImGui_ImplOpenGL3_Init("#version 300 es");
   return true;
 }
 
 bool Application::init() {
   bool ret;
-  ret = initGLFW();
+  ret = initSDL();
   CHECK_EQ(ret, true);
   ret = initIMGUI();
   CHECK_EQ(ret, true);
@@ -119,7 +114,7 @@ bool Application::init() {
   // init
   onInit();
   if (func_onInit != nullptr) {
-    func_onInit();
+    func_onInit(this);
   }
 
   return ret;
@@ -127,22 +122,45 @@ bool Application::init() {
 
 bool Application::run() {
   glEnable(GL_DEPTH_TEST);
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
+  bool running = true;
+  while (running == true) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+      ImGui_ImplSDL2_ProcessEvent(&event);
+      onEvent(&event);
+      if (func_onEvent != nullptr) {
+        func_onEvent(this, &event);
+      }
+
+      if (event.type == SDL_QUIT) {
+        running = false;
+      }
+      if (event.type == SDL_WINDOWEVENT && 
+          event.window.event == SDL_WINDOWEVENT_CLOSE && 
+          event.window.windowID == SDL_GetWindowID(window)) {
+        running = false;
+      }
+    }
 
     // timer and frame
     time = timer.delta();
     frame++;
-    animation.update();
-    
+    animation.timer.update();
+
+    // update
+    onUpdate();
+    if (func_onUpdate != nullptr) {
+      func_onUpdate(this);
+    }
+
     //ImGui
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
     onGUIAnimation();
     onGUI();
     if(func_onGUI != nullptr) {
-      func_onGUI();
+      func_onGUI(this);
     }
     ImGui::Render();
 
@@ -159,19 +177,19 @@ bool Application::run() {
     // draw
     onDraw();
     if (func_onDraw != nullptr) {
-      func_onDraw();
+      func_onDraw(this);
     }
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     // swap buffer
-    glfwSwapBuffers(window);
+    SDL_GL_SwapWindow(window);
   }
   return true;
 }
 
 bool Application::cleanIMGUI() {
   ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();
   return true;
 }
@@ -188,89 +206,58 @@ bool Application::onDraw() {
   return true;
 }
 
-bool Application::onDestory() {
+bool Application::onDestroy() {
   return true;
 }
 
-void Application::framebuffer_size_callback(int width, int height) {
-  window_width = width;
-  window_height = height;
-  glViewport(0, 0, width, height);
+bool Application::onUpdate() {
+  return true;
 }
-void Application::mouse_callback(float xpos, float ypos) {
 
-}
-void Application::scroll_callback(float xoffset, float yoffset) {
-
-}
-void Application::key_callback(int key, int scancode, int action, int mods) {
-
-}
-void Application::mouse_button_callback(int button, int action, int mods) {
-
+bool Application::onEvent(const SDL_Event* event) {
+  return true;
 }
 
 void Application::onGUIAnimation() {
   ImGui::Begin("Animation");
-  ImGui::Text("Current Time: %.3fs", animation.time);
-  ImGui::Checkbox("Interrupted", &(animation.interrupted));
+  ImGui::Text("Current Time: %.3fs", animation.timer.time);
+  ImGui::Checkbox("Interrupted", &(animation.timer.interrupted));
   if (ImGui::Button("Start")) {
-    animation.start();
+    animation.timer.start();
   }
   ImGui::SameLine();
   if (ImGui::Button("Pause")) {
-    animation.pause();
+    animation.timer.pause();
   }
   ImGui::SameLine();
   if (ImGui::Button("Stop")) {
-    animation.stop();
+    animation.timer.stop();
   }
   ImGui::End();
 }
 
-void glfw_error_callback(const int error, const char* description) {
-  LOG(ERROR) 
-    << "[ERROR]: GLFW error "
-    << error 
-    << ": " 
-    << description 
-    << " \n";
+void Application::onInit(std::function<bool(Application* self)> func) {
+  func_onInit = func;
 }
 
-void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-  Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-  app->framebuffer_size_callback(width, height);
-  if (app->func_framebuffer_size_callback != nullptr) {
-    app->func_framebuffer_size_callback(width, height);
-  }
+void Application::onEvent(std::function<bool(Application* self, const SDL_Event* event)> func) {
+  func_onEvent = func;
 }
-void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-  Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-  app->mouse_callback(static_cast<float>(xpos), static_cast<float>(ypos));
-  if (app->func_mouse_callback != nullptr) {
-    app->func_mouse_callback(static_cast<float>(xpos), static_cast<float>(ypos));
-  }
+
+void Application::onGUI(std::function<bool(Application* self)> func) {
+  func_onGUI = func;
 }
-void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-  Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-  app->scroll_callback(static_cast<float>(xoffset), static_cast<float>(yoffset));
-  if (app->func_scroll_callback != nullptr) {
-    app->func_scroll_callback(static_cast<float>(xoffset), static_cast<float>(yoffset));
-  }
+
+void Application::onDraw(std::function<bool(Application* self)> func) {
+  func_onDraw = func;
 }
-void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-  app->key_callback(key, scancode, action, mods);
-  if (app->func_key_callback != nullptr) {
-    app->func_key_callback(key, scancode, action, mods);
-  }
+
+void Application::onDestroy(std::function<bool(Application* self)> func) {
+  func_onDestroy = func;
 }
-void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-  Application* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-  app->mouse_button_callback(button, action, mods);
-  if (app->func_mouse_button_callback != nullptr) {
-    app->func_mouse_button_callback(button, action, mods);
-  }
+
+void Application::onUpdate(std::function<bool(Application* self)> func) {
+  func_onUpdate = func;
 }
 
 } // namespace middle

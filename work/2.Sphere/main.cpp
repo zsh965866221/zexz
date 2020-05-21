@@ -31,7 +31,7 @@ static glm::vec4 BACKGROUND_COLOR(0.45f, 0.55f, 0.60f, 1.00f);
 static void onInit();
 static void onGUI();
 static void onDraw();
-static void onDestory();
+static void onDestroy();
 
 // Struct
 struct UI {
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  onDestory();
+  onDestroy();
 
   glfwDestroyWindow(window);
   glfwTerminate();
@@ -299,7 +299,7 @@ void onDraw() {
   data.shader->unuse();
 }
 
-void onDestory() {
+void onDestroy() {
   glDeleteVertexArrays(1, &(data.VAO));
   glDeleteBuffers(1, &(data.VBO));
   glDeleteBuffers(1, &(data.IBO));

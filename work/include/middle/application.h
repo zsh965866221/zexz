@@ -6,13 +6,14 @@
 
 #include "glad/glad.h"
 #include "gflags/gflags.h"
-#include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glog/logging.h"
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
+#include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+#include "SDL.h"
+#include "SDL_opengl.h"
 
 #include "middle/animation.h"
 #include "middle/shader.h"
@@ -31,7 +32,7 @@ public:
     const int window_width,
     const int window_height,
     const int version_major = 3,
-    const int version_minor = 3,
+    const int version_minor = 0,
     const glm::vec4& background_color = DEFAULT_BACKGROUND_COLOR);
   Application();
   virtual ~Application();
@@ -41,39 +42,30 @@ public:
   virtual bool run();
   
 public:
-  virtual bool onGUI();
   virtual bool onInit();
+  virtual bool onEvent(const SDL_Event* event);
+  virtual bool onGUI();
   virtual bool onDraw();
-  virtual bool onDestory();
+  virtual bool onDestroy();
+  virtual bool onUpdate();
 
 public:
-  // some call back from glfw
-  virtual void framebuffer_size_callback(int width, int height);
-  virtual void mouse_callback(float xpos, float ypos);
-  virtual void scroll_callback(float xoffset, float yoffset);
-  virtual void key_callback(int key, int scancode, int action, int mods);
-  virtual void mouse_button_callback(int button, int action, int mods);
-
-public:
-  void register_onInit(std::function<bool(void)> func);
-  void register_onGUI(std::function<bool(void)> func);
-  void register_onDraw(std::function<bool(void)> func);
-  void register_onDestory(std::function<bool(void)> func);
-  void register_framebuffer_size_callback(std::function<void(int width, int height)> func);
-  void register_mouse_callback(std::function<void(float xpos, float ypos)> func);
-  void register_scroll_callback(std::function<void(int key, int scancode, int action, int mods)> func);
-  void register_key_callback(std::function<void(int button, int action, int mods)> func);
-
-protected:
-  bool initGLFW();
-  bool initIMGUI();
-  bool cleanIMGUI();
-  void error_callback(int error, const char* description);
+  void onInit(std::function<bool(Application* self)> func);
+  void onEvent(std::function<bool(Application* self, const SDL_Event* event)> func);
+  void onGUI(std::function<bool(Application* self)> func);
+  void onDraw(std::function<bool(Application* self)> func);
+  void onDestroy(std::function<bool(Application* self)> func);
+  void onUpdate(std::function<bool(Application* self)> func);
 
 private:
-  void onGUIAnimation();
+  bool initSDL();
+  bool initIMGUI();
+  bool cleanIMGUI();
 
-protected:
+public:
+  virtual void onGUIAnimation();
+
+public:
   std::string window_name;
   int window_width;
   int window_height;
@@ -83,28 +75,23 @@ protected:
   std::string resource_dir;
 
   // single window
-  GLFWwindow* window;
+  SDL_Window* window;
+  SDL_GLContext gl_context;
 
   float time;
   int frame;
 
 public:
-  std::function<bool(void)> func_onInit; 
-  std::function<bool(void)> func_onGUI; 
-  std::function<bool(void)> func_onDraw; 
-  std::function<bool(void)> func_onDestory; 
-
-  std::function<void(int width, int height)> func_framebuffer_size_callback;
-  std::function<void(float xpos, float ypos)> func_mouse_callback;
-  std::function<void(float xoffset, float yoffset)> func_scroll_callback;
-  std::function<void(int key, int scancode, int action, int mods)> func_key_callback;
-  std::function<void(int button, int action, int mods)> func_mouse_button_callback;
+  utils::Timer timer;
+  animation::Animation animation;
 
 public:
-  Animation animation;
-
-private:
-  Timer timer;
+  std::function<bool(Application* self)> func_onInit;
+  std::function<bool(Application* self, const SDL_Event* event)> func_onEvent;
+  std::function<bool(Application* self)> func_onGUI;
+  std::function<bool(Application* self)> func_onDraw;
+  std::function<bool(Application* self)> func_onDestroy;
+  std::function<bool(Application* self)> func_onUpdate;
 };
 
 } // namespace middle

@@ -6,8 +6,9 @@
 
 namespace zexz {
 namespace middle {
+namespace animation {
 
-Animation::Animation(float maxTime):
+Timer::Timer(float maxTime):
     time(0.0f),
     currTime(0.0),
     maxTime(maxTime),
@@ -15,16 +16,16 @@ Animation::Animation(float maxTime):
     interrupted(false) {
 }
 
-Animation::Animation():
-  Animation(10.0f) {}
+Timer::Timer():
+  Timer(10.0f) {}
 
-void Animation::start() {
+void Timer::start() {
   currTime = timer.delta();
   time = 0.0;
   status = AnimationStatus_Runing;
 }
 
-void Animation::pause() {
+void Timer::pause() {
   switch (status)
   {
   case AnimationStatus_Runing:
@@ -39,12 +40,12 @@ void Animation::pause() {
   }
 }
 
-void Animation::stop() {
+void Timer::stop() {
   time = 0.0f;
   status = AnimationStatus_Stoped;
 }
 
-void Animation::update() {
+void Timer::update() {
   float t = timer.delta();
   switch (status)
   {
@@ -59,10 +60,13 @@ void Animation::update() {
     break;
   }
   currTime = t;
-  if (interrupted == true && time > maxTime - utils::EPSILON_FLOAT) {
+  if (interrupted == true && time > maxTime - zexz::utils::EPSILON_FLOAT) {
     time = 0.0f;
   }
 }
 
+Animation::Animation() {}
+
+} // namespace animation
 } // namespace middle
 } // namespace zexz

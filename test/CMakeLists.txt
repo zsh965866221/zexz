@@ -49,13 +49,14 @@ add_executable(test_application test_application.cpp)
 target_link_libraries(test_application
   glad
   gflags
-  glfw
   glm
   glog
   imgui
-  imgui_glfw_ogl
+  imgui_sdl_ogl
   middle
   stb
+  SDL2-static
+  SDL2main
   zexz
 )
 

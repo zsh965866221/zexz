@@ -8,11 +8,12 @@ add_library(middle STATIC
 target_link_libraries(middle
   glad
   gflags
-  glfw
   glm
   glog
   imgui
-  imgui_glfw_ogl
+  imgui_sdl_ogl
+  SDL2-static
+  SDL2main
   stb
   zexz
 )
