@@ -1,4 +1,5 @@
 #include "middle/application.h"
+#include "middle/camera_simple.h"
 
 #include <iostream>
 
@@ -112,8 +113,13 @@ public:
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(4 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // init gui
-    0;
+    // camera
+    camera.reset(new zexz::middle::SimpleCamera(
+      glm::vec3(0.0f, 0.0f, -2.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f),
+      window_width, 
+      window_height
+    ));
 
     return true;
   }
@@ -151,29 +157,11 @@ public:
       data.shader->use();
 
       // MVP
-      glm::vec3 viewPos = glm::vec3(0.0, 0.0, -2.0);
       glm::mat4 model = glm::mat4(1.0f);
-      glm::mat4 view = glm::lookAt(
-        viewPos,
-        glm::vec3(0.0, 0.0, 0.0),
-        glm::vec3(0.0, 1.0, 0.0)
-      );
-      glm::mat4 projection = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
       model = glm::rotate(model, animation.timer.time * 1.0f, glm::vec3(0.0, 0.0, 1.0));
-      view = glm::translate(view, 
-        glm::vec3(
-          -cameraStruct.mouseMidOffset.x / (float)window_width, 
-          -cameraStruct.mouseMidOffset.y / (float)window_height, 
-          -cameraStruct.distance
-        )
-      );
-      projection = glm::perspective(
-        glm::radians(45.0f), 
-        static_cast<float>(window_width) / static_cast<float>(window_height),
-        0.1f, 
-        100.0f);
-      data.shader->setMat4("uMVPMatrix", projection * view * model);
+
+      data.shader->setMat4("uMVPMatrix", camera->projection * camera->view * model);
 
       // texture matrix
       glm::mat4 textureMat = glm::mat4(1.0f);
@@ -211,66 +199,16 @@ public:
     return true;
   }
 
-  void onMouseMotion(const SDL_Event* event) {
-    int x = event->motion.x;
-    int y = event->motion.y;
-
-    cameraStruct.mousePosition = glm::vec2(x, y);
-    if (cameraStruct.midPressed == true) {
-      cameraStruct.mouseMidOffset = cameraStruct.mouseMidOffsetTmp + (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
-    }
-  }
-
-  void onMouseButton(const SDL_Event* event) {
-    if (event->button.button == SDL_BUTTON_MIDDLE) {
-      if (event->type == SDL_MOUSEBUTTONDOWN) {
-        cameraStruct.midPressed = true;
-        cameraStruct.mouseMidStart = cameraStruct.mousePosition;
-      } else if (event->type == SDL_MOUSEBUTTONUP) {
-        cameraStruct.midPressed = false;
-        cameraStruct.mouseMidOffsetTmp = cameraStruct.mouseMidOffset;
-        cameraStruct.mouseMidStart = glm::vec2(0.0, 0.0);
-      }
-    }
-  }
-
-  void onKeyButton(const SDL_Event* event) {
-    
-  }
-
-  void onMouseWheel(const SDL_Event* event) {
-    cameraStruct.distance += ((float)event->wheel.y * 0.1f);
-  }
-
   bool onEvent(const SDL_Event* event) {
-    switch (event->type) {
-    case SDL_MOUSEMOTION:
-      onMouseMotion(event);
-      break;
-    case SDL_MOUSEBUTTONDOWN:
-      onMouseButton(event);
-      break;
-    case SDL_MOUSEBUTTONUP:
-      onMouseButton(event);
-      break;
-    case SDL_KEYDOWN:
-      onKeyButton(event);
-      break;
-    case SDL_KEYUP:
-      onKeyButton(event);
-    case SDL_MOUSEWHEEL:
-      onMouseWheel(event);
-      break;
-    default:
-      break;
-    }
+    camera->onEvent(event);
+
     return true;
   }
 
 private:
   UI ui;
   Data data;
-  CameraStruct cameraStruct;
+  std::unique_ptr<zsh::middle::SimpleCamera> camera;
 };
 
 int main(int argc, char* argv[]) {
