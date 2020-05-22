@@ -73,8 +73,8 @@ public:
   bool onInit() {
     // args
     std::string path_image = resource_dir + "/images/f.jpg";
-    std::string path_vertex = resource_dir + "/shaders/Template/template.vs";
-    std::string path_fragment = resource_dir + "/shaders/Template/template.fs";
+    std::string path_vertex = resource_dir + "/shaders/Template/template.vsh";
+    std::string path_fragment = resource_dir + "/shaders/Template/template.fsh";
     // texture
     data.texture = zexz::middle::load_texture(
       path_image,
@@ -128,24 +128,7 @@ public:
       window_width, 
       window_height
     ));
-
-    // compute shader
-    int work_group_count[3];
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &(work_group_count[0]));
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &(work_group_count[1]));
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &(work_group_count[2]));
-    std::cout << work_group_count[0] << "," << work_group_count[1] << "," << work_group_count[2] << std::endl;
     
-    int work_group_size[3];
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_group_size[0]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_group_size[1]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_group_size[2]);
-    std::cout << work_group_size[0] << "," << work_group_size[1] << "," << work_group_size[2] << std::endl;
-
-    int work_group_invocations;
-    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_invocations);
-    std::cout << work_group_invocations << std::endl;
-
     return true;
   }
 

@@ -1,6 +1,7 @@
 #include "middle/application.h"
 #include "middle/buffer.h"
 #include "middle/camera_simple.h"
+#include "middle/compute.h"
 #include "middle/program.h"
 #include "middle/shader.h"
 #include "middle/texture.h"
@@ -156,77 +157,30 @@ public:
     );
     shader_compute.complie();
 
-    zexz::middle::Program program_compute;
+    zexz::middle::ComputeProgram program_compute;
     program_compute.attach(shader_compute);
     program_compute.link();
-    
 
-    GLfloat varInput[4] = {1.0f, 2.0f, 3.0f, 4.0f};
-    GLuint inputBuffer;
-    glGenBuffers(1, &inputBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, inputBuffer);
-    glBufferData(
-      GL_SHADER_STORAGE_BUFFER,
-      sizeof(varInput),
-      varInput,
-      GL_DYNAMIC_DRAW
-    );
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, inputBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    GLfloat varOutput[4] = {1.0f, 2.0f, 3.0f, 4.0f};
-    GLuint outputBuffer;
-    glGenBuffers(1, &outputBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer);
-    glBufferData(
-      GL_SHADER_STORAGE_BUFFER,
-      sizeof(varOutput),
-      varOutput,
-      GL_DYNAMIC_DRAW
-    );
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, outputBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    // program_compute.use();
-    // glDispatchCompute(1, 1, 1);
-    // program_compute.unuse();
-    // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    // read to cpu
-    {
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer);
-      const auto varOutputGL = static_cast<GLfloat*>(
-        glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY)
-      );
-      std::memcpy(varOutput, varOutputGL, sizeof(varOutput));
-      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    }
-    std::cout << varOutput[0] << ", "
-              << varOutput[1] << ", "
-              << varOutput[2] << ", "
-              << varOutput[3] << std::endl;
+    // buffer
+    zexz::middle::GPUBuffer<float> inBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
+    inBuffer.map([&] (const auto* self, auto* data) {
+      data[0] = 1.0f;
+      data[3] = 4.0f;
+    });
+    zexz::middle::GPUBuffer<float> outBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
 
     program_compute.use();
-    glDispatchCompute(1, 1, 1);
+    program_compute.bindBuffer(inBuffer, 0);
+    program_compute.bindBuffer(outBuffer, 1);
+    program_compute.compute(1, 1, 1);
     program_compute.unuse();
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    // read to cpu
-    {
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, outputBuffer);
-      const auto varOutputGL = static_cast<GLfloat*>(
-        glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY)
-      );
-      std::memcpy(varOutput, varOutputGL, sizeof(varOutput));
-      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    }
-    std::cout << varOutput[0] << ", "
-              << varOutput[1] << ", "
-              << varOutput[2] << ", "
-              << varOutput[3] << std::endl;
-
+    outBuffer.map([&](const auto* self, auto* data) {
+      std::cout << data[0] << ", "
+                << data[1] << ", "
+                << data[2] << ", "
+                << data[3] << std::endl;
+    });
     return true;
   }
 

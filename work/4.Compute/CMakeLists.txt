@@ -12,3 +12,18 @@ target_link_libraries(4.Compute
   stb
   zexz
 )
+
+add_executable(4.Compute_class
+  main_class.cpp
+)
+target_link_libraries(4.Compute_class
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
