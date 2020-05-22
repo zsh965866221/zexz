@@ -1,7 +1,7 @@
-add_executable(2.Sphere
+add_executable(4.Compute
   main.cpp
 )
-target_link_libraries(2.Sphere
+target_link_libraries(4.Compute
   gflags
   glad
   glfw

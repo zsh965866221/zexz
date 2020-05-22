@@ -1,5 +1,9 @@
 #include "middle/application.h"
 #include "middle/camera_simple.h"
+#include "middle/program.h"
+#include "middle/shader.h"
+#include "middle/texture.h"
+#include "middle/utils.h"
 
 #include <iostream>
 
@@ -21,7 +25,7 @@ private:
   };
   struct Data {
     Data():
-      shader(nullptr),
+      program(nullptr),
       texture(0),
       image_width(0),
       image_height(0),
@@ -30,7 +34,7 @@ private:
       VBO(0),
       IBO(0) {
     }
-    std::unique_ptr<zexz::middle::Shader> shader;
+    std::unique_ptr<zexz::middle::Program> program;
     GLuint texture;
     int image_width;
     int image_height;
@@ -69,8 +73,8 @@ public:
   bool onInit() {
     // args
     std::string path_image = resource_dir + "/images/f.jpg";
-    std::string path_vertex = resource_dir + "/shaders/Basic3D/basic3d.vs";
-    std::string path_fragment = resource_dir + "/shaders/Basic3D/basic3d.fs";
+    std::string path_vertex = resource_dir + "/shaders/Template/template.vs";
+    std::string path_fragment = resource_dir + "/shaders/Template/template.fs";
     // texture
     data.texture = zexz::middle::load_texture(
       path_image,
@@ -78,10 +82,14 @@ public:
       &(data.image_height),
       &(data.image_channels));
     // shader
-    data.shader.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment
-    ));
+    zexz::middle::Shader shader_vertex(zexz::middle::ReadText(path_vertex), zexz::middle::ShaderType_Vertex);
+    shader_vertex.complie();
+    zexz::middle::Shader shader_fragment(zexz::middle::ReadText(path_fragment), zexz::middle::ShaderType_Fragment);
+    shader_fragment.complie();
+    data.program.reset(new zexz::middle::Program());
+    data.program->attach(shader_vertex);
+    data.program->attach(shader_fragment);
+    data.program->link();
     // VAO VBO IBO
     float vertices[] = {
       // positions                 // texture coords
@@ -121,6 +129,23 @@ public:
       window_height
     ));
 
+    // compute shader
+    int work_group_count[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &(work_group_count[0]));
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &(work_group_count[1]));
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &(work_group_count[2]));
+    std::cout << work_group_count[0] << "," << work_group_count[1] << "," << work_group_count[2] << std::endl;
+    
+    int work_group_size[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_group_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_group_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_group_size[2]);
+    std::cout << work_group_size[0] << "," << work_group_size[1] << "," << work_group_size[2] << std::endl;
+
+    int work_group_invocations;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_invocations);
+    std::cout << work_group_invocations << std::endl;
+
     return true;
   }
 
@@ -145,7 +170,7 @@ public:
   }
 
   bool onDraw() {
-    CHECK_NOTNULL(data.shader);
+    CHECK_NOTNULL(data.program);
 
     { // draw main
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -154,14 +179,14 @@ public:
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      data.shader->use();
+      data.program->use();
 
       // MVP
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
       model = glm::rotate(model, animation.timer.time * 1.0f, glm::vec3(0.0, 0.0, 1.0));
 
-      data.shader->setMat4("uMVPMatrix", camera->projection * camera->view * model);
+      data.program->setMat4("uMVPMatrix", camera->projection * camera->view * model);
 
       // texture matrix
       glm::mat4 textureMat = glm::mat4(1.0f);
@@ -169,22 +194,22 @@ public:
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
       textureMat = glm::translate(textureMat, glm::vec3(-0.5f, -0.5f, 0.0f));
-      data.shader->setMat4("uTexuvMat1", textureMat);
+      data.program->setMat4("uTexuvMat1", textureMat);
 
-      data.shader->setTexture("uBitmap1", data.texture, 0);
+      data.program->setTexture("uBitmap1", data.texture, 0);
 
-      data.shader->setFloat("uTextureWidth1", (float)data.image_width);
-      data.shader->setFloat("uTextureHeight1", (float)data.image_height);
+      data.program->setFloat("uTextureWidth1", (float)data.image_width);
+      data.program->setFloat("uTextureHeight1", (float)data.image_height);
 
       // uniform
-      data.shader->setFloat("uTilt", ui.Tilt);
-      data.shader->setFloat("uSwivel", ui.Swivel);
-      data.shader->setFloat("uDistance", ui.Distance);
-      data.shader->setBool("uSpecular", ui.Specular);
+      data.program->setFloat("uTilt", ui.Tilt);
+      data.program->setFloat("uSwivel", ui.Swivel);
+      data.program->setFloat("uDistance", ui.Distance);
+      data.program->setBool("uSpecular", ui.Specular);
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader->unuse();
+      data.program->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -221,5 +246,3 @@ int main(int argc, char* argv[]) {
   app.run();
   return 0;
 }
-
-

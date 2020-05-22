@@ -11,8 +11,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "middle/program.h"
 #include "middle/shader.h"
 #include "middle/texture.h"
+#include "middle/utils.h"
 #include "zexz/utils/utils.h"
 
 static void glfw_error_callback(int error, const char* description);
@@ -41,10 +43,10 @@ struct UI {
 };
 struct Data {
   Data() {
-    shader.reset(nullptr);
+    program.reset(nullptr);
   }
 
-  std::unique_ptr<zexz::middle::Shader> shader;
+  std::unique_ptr<zexz::middle::Program> program;
   GLuint texture;
   int image_width;
   int image_height;
@@ -182,10 +184,14 @@ void onInit() {
     &(data.image_height),
     &(data.image_channels));
   // shader
-  data.shader.reset(new zexz::middle::Shader(
-    FLAGS_vertex,
-    FLAGS_fragment
-  ));
+  zexz::middle::Shader shader_vertex(zexz::middle::ReadText(FLAGS_vertex), zexz::middle::ShaderType_Vertex);
+  shader_vertex.complie();
+  zexz::middle::Shader shader_fragment(zexz::middle::ReadText(FLAGS_fragment), zexz::middle::ShaderType_Fragment);
+  shader_fragment.complie();
+  data.program.reset(new zexz::middle::Program());
+  data.program->attach(shader_vertex);
+  data.program->attach(shader_fragment);
+  data.program->link();
   // VAO VBO IBO
   float vertices[] = {
     // positions           // texture coords
@@ -231,8 +237,8 @@ void onGUI() {
 }
 
 void onDraw() {
-  data.shader->use();
-  data.shader->setTexture("texture1", data.texture, 0);
+  data.program->use();
+  data.program->setTexture("texture1", data.texture, 0);
 
   // basic 3d
   glm::vec3 plane_norm = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -253,19 +259,19 @@ void onDraw() {
     static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT),
     0.1f, 
     100.0f);
-  data.shader->setMat4("model", model);
-  data.shader->setMat4("view", view);
-  data.shader->setMat4("projection", projection);
-  data.shader->setVec3(
+  data.program->setMat4("model", model);
+  data.program->setMat4("view", view);
+  data.program->setMat4("projection", projection);
+  data.program->setVec3(
     "norm", 
     glm::mat3(model) * plane_norm);
-  data.shader->setVec3("viewPos", viewPos);
-  data.shader->setVec3("lightPos", glm::vec3((float)(data.image_width) / (float)(data.image_height), 1.0, -1.0));
-  data.shader->setBool("Specular", ui.Specular);
+  data.program->setVec3("viewPos", viewPos);
+  data.program->setVec3("lightPos", glm::vec3((float)(data.image_width) / (float)(data.image_height), 1.0, -1.0));
+  data.program->setBool("Specular", ui.Specular);
 
   glBindVertexArray(data.VAO);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-  data.shader->unuse();
+  data.program->unuse();
 }
 
 void onDestroy() {

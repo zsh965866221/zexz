@@ -1,4 +1,9 @@
 #include "middle/application.h"
+#include "middle/camera_simple.h"
+#include "middle/program.h"
+#include "middle/shader.h"
+#include "middle/texture.h"
+#include "middle/utils.h"
 
 #include <iostream>
 
@@ -20,7 +25,7 @@ private:
   };
   struct Data {
     Data():
-      shader(nullptr),
+      program(nullptr),
       texture(0),
       image_width(0),
       image_height(0),
@@ -29,7 +34,7 @@ private:
       VBO(0),
       IBO(0) {
     }
-    std::unique_ptr<zexz::middle::Shader> shader;
+    std::unique_ptr<zexz::middle::Program> program;
     GLuint texture;
     int image_width;
     int image_height;
@@ -77,10 +82,14 @@ public:
       &(data.image_height),
       &(data.image_channels));
     // shader
-    data.shader.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment
-    ));
+    zexz::middle::Shader shader_vertex(zexz::middle::ReadText(path_vertex), zexz::middle::ShaderType_Vertex);
+    shader_vertex.complie();
+    zexz::middle::Shader shader_fragment(zexz::middle::ReadText(path_fragment), zexz::middle::ShaderType_Fragment);
+    shader_fragment.complie();
+    data.program.reset(new zexz::middle::Program());
+    data.program->attach(shader_vertex);
+    data.program->attach(shader_fragment);
+    data.program->link();
     // VAO VBO IBO
     float vertices[] = {
       // positions                 // texture coords
@@ -139,7 +148,7 @@ public:
   }
 
   bool onDraw() {
-    CHECK_NOTNULL(data.shader);
+    CHECK_NOTNULL(data.program);
 
     { // draw main
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -148,7 +157,7 @@ public:
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      data.shader->use();
+      data.program->use();
 
       // MVP
       glm::vec3 viewPos = glm::vec3(0.0, 0.0, -2.0);
@@ -172,7 +181,7 @@ public:
         static_cast<float>(window_width) / static_cast<float>(window_height),
         0.1f, 
         100.0f);
-      data.shader->setMat4("uMVPMatrix", projection * view * model);
+      data.program->setMat4("uMVPMatrix", projection * view * model);
 
       // texture matrix
       glm::mat4 textureMat = glm::mat4(1.0f);
@@ -180,22 +189,22 @@ public:
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
       textureMat = glm::translate(textureMat, glm::vec3(-0.5f, -0.5f, 0.0f));
-      data.shader->setMat4("uTexuvMat1", textureMat);
+      data.program->setMat4("uTexuvMat1", textureMat);
 
-      data.shader->setTexture("uBitmap1", data.texture, 0);
+      data.program->setTexture("uBitmap1", data.texture, 0);
 
-      data.shader->setFloat("uTextureWidth1", (float)data.image_width);
-      data.shader->setFloat("uTextureHeight1", (float)data.image_height);
+      data.program->setFloat("uTextureWidth1", (float)data.image_width);
+      data.program->setFloat("uTextureHeight1", (float)data.image_height);
 
       // uniform
-      data.shader->setFloat("uTilt", ui.Tilt);
-      data.shader->setFloat("uSwivel", ui.Swivel);
-      data.shader->setFloat("uDistance", ui.Distance);
-      data.shader->setBool("uSpecular", ui.Specular);
+      data.program->setFloat("uTilt", ui.Tilt);
+      data.program->setFloat("uSwivel", ui.Swivel);
+      data.program->setFloat("uDistance", ui.Distance);
+      data.program->setBool("uSpecular", ui.Specular);
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader->unuse();
+      data.program->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 

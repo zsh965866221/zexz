@@ -16,8 +16,6 @@
 #include "SDL_opengl.h"
 
 #include "middle/animation.h"
-#include "middle/shader.h"
-#include "middle/texture.h"
 #include "middle/timer.h"
 #include "zexz/utils/utils.h"
 
@@ -31,7 +29,7 @@ public:
     const std::string& window_name, 
     const int window_width,
     const int window_height,
-    const int version_major = 3,
+    const int version_major = 4,
     const int version_minor = 0,
     const glm::vec4& background_color = DEFAULT_BACKGROUND_COLOR);
   Application();

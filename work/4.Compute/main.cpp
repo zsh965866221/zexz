@@ -1,4 +1,11 @@
 #include "middle/application.h"
+#include "middle/camera_simple.h"
+#include "middle/program.h"
+#include "middle/shader.h"
+#include "middle/texture.h"
+#include "middle/utils.h"
+
+#include <iostream>
 
 namespace zsh = zexz;
 
@@ -7,14 +14,18 @@ private:
   // Struct
   struct UI {
     UI(): 
-      Radius(0.0f), 
-      Center(glm::vec2(0.0f, 0.0f)) {}
-    float Radius;
-    glm::vec2 Center;
+      Swivel(0.0f),
+      Tilt(0.0f),
+      Distance(0.0f),
+      Specular(false) {}
+      float Swivel;
+      float Tilt;
+      float Distance;
+      bool Specular;
   };
   struct Data {
     Data():
-      shader(nullptr),
+      program(nullptr),
       texture(0),
       image_width(0),
       image_height(0),
@@ -23,8 +34,7 @@ private:
       VBO(0),
       IBO(0) {
     }
-
-    std::unique_ptr<zexz::middle::Shader> shader;
+    std::unique_ptr<zexz::middle::Program> program;
     GLuint texture;
     int image_width;
     int image_height;
@@ -62,9 +72,9 @@ public:
 public:
   bool onInit() {
     // args
-    path_image = resource_dir + "/images/grid.jpg";
-    path_vertex = resource_dir + "/shaders/Spherize/spherize.vs";
-    path_fragment = resource_dir + "/shaders/Spherize/spherize.fs";
+    std::string path_image = resource_dir + "/images/f.jpg";
+    std::string path_vertex = resource_dir + "/shaders/Compute/template.vs";
+    std::string path_fragment = resource_dir + "/shaders/Compute/template.fs";
     // texture
     data.texture = zexz::middle::load_texture(
       path_image,
@@ -72,10 +82,16 @@ public:
       &(data.image_height),
       &(data.image_channels));
     // shader
-    data.shader.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment
-    ));
+    zexz::middle::Shader shader_vertex(zexz::middle::ReadText(path_vertex), zexz::middle::ShaderType_Vertex);
+    shader_vertex.complie();
+
+    zexz::middle::Shader shader_fragment(zexz::middle::ReadText(path_fragment), zexz::middle::ShaderType_Fragment);
+    shader_fragment.complie();
+    // program
+    data.program.reset(new zexz::middle::Program());
+    data.program->attach(shader_vertex);
+    data.program->attach(shader_fragment);
+    data.program->link();
     // VAO VBO IBO
     float vertices[] = {
       // positions                 // texture coords
@@ -107,16 +123,43 @@ public:
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(4 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // init gui
-    ui.Center = glm::vec2((float)data.image_width / 2.0, (float)data.image_height / 2.0);
+    // camera
+    camera.reset(new zexz::middle::SimpleCamera(
+      glm::vec3(0.0f, 0.0f, -2.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f),
+      window_width, 
+      window_height
+    ));
+
+    // compute shader
+    int work_group_count[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &(work_group_count[0]));
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &(work_group_count[1]));
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &(work_group_count[2]));
+    std::cout << work_group_count[0] << "," << work_group_count[1] << "," << work_group_count[2] << std::endl;
+    
+    int work_group_size[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_group_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_group_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_group_size[2]);
+    std::cout << work_group_size[0] << "," << work_group_size[1] << "," << work_group_size[2] << std::endl;
+
+    int work_group_invocations;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_invocations);
+    std::cout << work_group_invocations << std::endl;
 
     return true;
   }
 
   bool onGUI() {
-    ImGui::Begin("Shperize");
-    ImGui::SliderFloat("Radius", &(ui.Radius), 0.0f, float(data.image_width) / 2.0f);
-    ImGui::DragFloat2("Center of Shpere", &(ui.Center[0]));
+    ImGui::Begin("Basic 3D");
+    ImGui::SliderFloat("Swivel", &(ui.Swivel), -180.0, 180.0);
+    ImGui::SliderFloat("Tilt", &(ui.Tilt), -180.0, 180.0);
+    ImGui::DragFloat(
+      "Distance to Image", 
+      &(ui.Distance)
+    );
+    ImGui::Checkbox("Specular Highlight", &(ui.Specular));
     ImGui::End();
 
     // help
@@ -129,35 +172,23 @@ public:
   }
 
   bool onDraw() {
-    CHECK_NOTNULL(data.shader);
+    CHECK_NOTNULL(data.program);
 
-    { // draw
-      data.shader->use();
-      data.shader->setTexture("texture1", data.texture, 0);
+    { // draw main
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glViewport(0, 0, window_width, window_height);
+      glEnable(GL_DEPTH_TEST);
+      glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      data.program->use();
 
       // MVP
-      glm::vec3 viewPos = glm::vec3(0.0, 0.0, -2.0);
       glm::mat4 model = glm::mat4(1.0f);
-      glm::mat4 view = glm::lookAt(
-        viewPos,
-        glm::vec3(0.0, 0.0, 0.0),
-        glm::vec3(0.0, 1.0, 0.0)
-      );
-      glm::mat4 projection = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
-      view = glm::translate(view, 
-        glm::vec3(
-          -cameraStruct.mouseMidOffset.x / (float)window_width, 
-          -cameraStruct.mouseMidOffset.y / (float)window_height, 
-          -cameraStruct.distance
-        )
-      );
-      projection = glm::perspective(
-        glm::radians(45.0f), 
-        static_cast<float>(window_width) / static_cast<float>(window_height),
-        0.1f, 
-        100.0f);
-      data.shader->setMat4("uMVPMatrix", projection * view * model);
+      model = glm::rotate(model, animation.timer.time * 1.0f, glm::vec3(0.0, 0.0, 1.0));
+
+      data.program->setMat4("uMVPMatrix", camera->projection * camera->view * model);
 
       // texture matrix
       glm::mat4 textureMat = glm::mat4(1.0f);
@@ -165,21 +196,23 @@ public:
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
       textureMat = glm::rotate(textureMat, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
       textureMat = glm::translate(textureMat, glm::vec3(-0.5f, -0.5f, 0.0f));
-      data.shader->setMat4("uTexuvMat1", textureMat);
+      data.program->setMat4("uTexuvMat1", textureMat);
 
-      data.shader->setTexture("uBitmap1", data.texture, 0);
+      data.program->setTexture("uBitmap1", data.texture, 0);
 
-      data.shader->setFloat("uTextureWidth1", (float)data.image_width);
-      data.shader->setFloat("uTextureHeight1", (float)data.image_height);
+      data.program->setFloat("uTextureWidth1", (float)data.image_width);
+      data.program->setFloat("uTextureHeight1", (float)data.image_height);
 
-      // parameter
-      data.shader->setFloat("uRadius", ui.Radius);
-      data.shader->setVec2("uCenter", ui.Center);
-  
+      // uniform
+      data.program->setFloat("uTilt", ui.Tilt);
+      data.program->setFloat("uSwivel", ui.Swivel);
+      data.program->setFloat("uDistance", ui.Distance);
+      data.program->setBool("uSpecular", ui.Specular);
+
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader->unuse();
-
+      data.program->unuse();
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     return true;
@@ -193,73 +226,20 @@ public:
     return true;
   }
 
-  void onMouseMotion(const SDL_Event* event) {
-    int x = event->motion.x;
-    int y = event->motion.y;
-
-    cameraStruct.mousePosition = glm::vec2(x, y);
-    if (cameraStruct.midPressed == true) {
-      cameraStruct.mouseMidOffset = cameraStruct.mouseMidOffsetTmp + (cameraStruct.mousePosition - cameraStruct.mouseMidStart);
-    }
-  }
-
-  void onMouseButton(const SDL_Event* event) {
-    if (event->button.button == SDL_BUTTON_MIDDLE) {
-      if (event->type == SDL_MOUSEBUTTONDOWN) {
-        cameraStruct.midPressed = true;
-        cameraStruct.mouseMidStart = cameraStruct.mousePosition;
-      } else if (event->type == SDL_MOUSEBUTTONUP) {
-        cameraStruct.midPressed = false;
-        cameraStruct.mouseMidOffsetTmp = cameraStruct.mouseMidOffset;
-        cameraStruct.mouseMidStart = glm::vec2(0.0, 0.0);
-      }
-    }
-  }
-
-  void onKeyButton(const SDL_Event* event) {
-    
-  }
-
-  void onMouseWheel(const SDL_Event* event) {
-    cameraStruct.distance += ((float)event->wheel.y * 0.1f);
-  }
-
   bool onEvent(const SDL_Event* event) {
-    switch (event->type) {
-    case SDL_MOUSEMOTION:
-      onMouseMotion(event);
-      break;
-    case SDL_MOUSEBUTTONDOWN:
-      onMouseButton(event);
-      break;
-    case SDL_MOUSEBUTTONUP:
-      onMouseButton(event);
-      break;
-    case SDL_KEYDOWN:
-      onKeyButton(event);
-      break;
-    case SDL_KEYUP:
-      onKeyButton(event);
-    case SDL_MOUSEWHEEL:
-      onMouseWheel(event);
-      break;
-    default:
-      break;
-    }
+    camera->onEvent(event);
+
     return true;
   }
 
 private:
   UI ui;
   Data data;
-  CameraStruct cameraStruct;
-
-  std::string path_image;
-  std::string path_vertex;
-  std::string path_fragment;
+  std::unique_ptr<zsh::middle::SimpleCamera> camera;
 };
 
 int main(int argc, char* argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   FLAGS_alsologtostderr = true;
 
@@ -268,5 +248,3 @@ int main(int argc, char* argv[]) {
   app.run();
   return 0;
 }
-
-

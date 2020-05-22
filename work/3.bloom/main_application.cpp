@@ -1,4 +1,10 @@
 #include "middle/application.h"
+#include "middle/camera_simple.h"
+#include "middle/program.h"
+#include "middle/shader.h"
+#include "middle/texture.h"
+#include "middle/utils.h"
+
 
 #include <iostream>
 
@@ -16,9 +22,9 @@ private:
   };
   struct Data {
     Data():
-      shader_bufferA(nullptr),
-      shader_bufferB(nullptr),
-      shader_main(nullptr),
+      Program_bufferA(nullptr),
+      Program_bufferB(nullptr),
+      Program_main(nullptr),
       texture(0),
       image_width(0),
       image_height(0),
@@ -32,9 +38,9 @@ private:
       textureB(0) {
     }
 
-    std::unique_ptr<zexz::middle::Shader> shader_bufferA;
-    std::unique_ptr<zexz::middle::Shader> shader_bufferB;
-    std::unique_ptr<zexz::middle::Shader> shader_main;
+    std::unique_ptr<zexz::middle::Program> Program_bufferA;
+    std::unique_ptr<zexz::middle::Program> Program_bufferB;
+    std::unique_ptr<zexz::middle::Program> Program_main;
     GLuint texture;
     int image_width;
     int image_height;
@@ -90,18 +96,45 @@ public:
       &(data.image_height),
       &(data.image_channels));
     // shader
-    data.shader_bufferA.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment_bufferA
-    ));
-    data.shader_bufferB.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment_bufferB
-    ));
-    data.shader_main.reset(new zexz::middle::Shader(
-      path_vertex,
-      path_fragment_main
-    ));
+    zexz::middle::Shader shader_vertex(
+      zexz::middle::ReadText(path_vertex), 
+      zexz::middle::ShaderType_Vertex
+    );
+    shader_vertex.complie();
+
+    zexz::middle::Shader shader_fragment_bufferA(
+      zexz::middle::ReadText(path_fragment_bufferA), 
+      zexz::middle::ShaderType_Fragment
+    );
+    shader_fragment_bufferA.complie();
+
+    zexz::middle::Shader shader_fragment_bufferB(
+      zexz::middle::ReadText(path_fragment_bufferB), 
+      zexz::middle::ShaderType_Fragment
+    );
+    shader_fragment_bufferB.complie();
+
+    zexz::middle::Shader shader_fragment_main(
+      zexz::middle::ReadText(path_fragment_main), 
+      zexz::middle::ShaderType_Fragment
+    );
+    shader_fragment_main.complie();
+    // program
+    data.Program_bufferA.reset(new zexz::middle::Program());
+    data.Program_bufferA->attach(shader_vertex);
+    data.Program_bufferA->attach(shader_fragment_bufferA);
+    data.Program_bufferA->link();
+
+    data.Program_bufferB.reset(new zexz::middle::Program());
+    data.Program_bufferB->attach(shader_vertex);
+    data.Program_bufferB->attach(shader_fragment_bufferB);
+    data.Program_bufferB->link();
+
+    data.Program_main.reset(new zexz::middle::Program());
+    data.Program_main->attach(shader_vertex);
+    data.Program_main->attach(shader_fragment_main);
+    data.Program_main->link();
+
     // VAO VBO IBO
     float vertices[] = {
       // positions           // texture coords
@@ -200,9 +233,9 @@ public:
   }
 
   bool onDraw() {
-    CHECK_NOTNULL(data.shader_bufferA);
-    CHECK_NOTNULL(data.shader_bufferB);
-    CHECK_NOTNULL(data.shader_main);
+    CHECK_NOTNULL(data.Program_bufferA);
+    CHECK_NOTNULL(data.Program_bufferB);
+    CHECK_NOTNULL(data.Program_main);
 
     { // draw bufferA
       glBindFramebuffer(GL_FRAMEBUFFER, data.bufferA);
@@ -210,18 +243,18 @@ public:
       glEnable(GL_DEPTH_TEST);
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      data.shader_bufferA->use();
-      data.shader_bufferA->setTexture("iChannel0", data.texture, 0);
+      data.Program_bufferA->use();
+      data.Program_bufferA->setTexture("iChannel0", data.texture, 0);
 
-      data.shader_bufferA->setMat4("model", glm::mat4(1.0f));
-      data.shader_bufferA->setMat4("view", glm::mat4(1.0f));
-      data.shader_bufferA->setMat4("projection", glm::mat4(1.0f));
+      data.Program_bufferA->setMat4("model", glm::mat4(1.0f));
+      data.Program_bufferA->setMat4("view", glm::mat4(1.0f));
+      data.Program_bufferA->setMat4("projection", glm::mat4(1.0f));
 
-      data.shader_bufferA->setVec2("iResolution", glm::vec2(data.image_width, data.image_height));
+      data.Program_bufferA->setVec2("iResolution", glm::vec2(data.image_width, data.image_height));
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader_bufferA->unuse();
+      data.Program_bufferA->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -231,18 +264,18 @@ public:
       glEnable(GL_DEPTH_TEST);
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      data.shader_bufferB->use();
-      data.shader_bufferB->setTexture("iChannel0", data.textureA, 0);
+      data.Program_bufferB->use();
+      data.Program_bufferB->setTexture("iChannel0", data.textureA, 0);
 
-      data.shader_bufferB->setMat4("model", glm::mat4(1.0f));
-      data.shader_bufferB->setMat4("view", glm::mat4(1.0f));
-      data.shader_bufferB->setMat4("projection", glm::mat4(1.0f));
+      data.Program_bufferB->setMat4("model", glm::mat4(1.0f));
+      data.Program_bufferB->setMat4("view", glm::mat4(1.0f));
+      data.Program_bufferB->setMat4("projection", glm::mat4(1.0f));
 
-      data.shader_bufferB->setVec2("iResolution", glm::vec2(data.image_width, data.image_height));
+      data.Program_bufferB->setVec2("iResolution", glm::vec2(data.image_width, data.image_height));
   
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader_bufferB->unuse();
+      data.Program_bufferB->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -253,7 +286,7 @@ public:
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      data.shader_main->use();
+      data.Program_main->use();
 
         // MVP
       glm::vec3 viewPos = glm::vec3(0.0, 0.0, -2.0);
@@ -277,18 +310,18 @@ public:
         static_cast<float>(window_width) / static_cast<float>(window_height),
         0.1f, 
         100.0f);
-      data.shader_main->setMat4("model", model);
-      data.shader_main->setMat4("view", view);
-      data.shader_main->setMat4("projection", projection);
+      data.Program_main->setMat4("model", model);
+      data.Program_main->setMat4("view", view);
+      data.Program_main->setMat4("projection", projection);
 
-      data.shader_main->setTexture("iChannel0", data.textureA, 0);
-      data.shader_main->setTexture("iChannel1", data.textureB, 1);
+      data.Program_main->setTexture("iChannel0", data.textureA, 0);
+      data.Program_main->setTexture("iChannel1", data.textureB, 1);
 
-      data.shader_main->setVec2("iResolution", glm::vec2(window_width, window_height));
+      data.Program_main->setVec2("iResolution", glm::vec2(window_width, window_height));
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      data.shader_main->unuse();
+      data.Program_main->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
