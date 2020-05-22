@@ -29,6 +29,7 @@ private:
     Data():
       program(nullptr),
       texture(0),
+      texture_compute(0),
       image_width(0),
       image_height(0),
       image_channels(0),
@@ -38,6 +39,7 @@ private:
     }
     std::unique_ptr<zexz::middle::Program> program;
     GLuint texture;
+    GLuint texture_compute;
     int image_width;
     int image_height;
     int image_channels;
@@ -150,7 +152,7 @@ public:
     glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_invocations);
     std::cout << work_group_invocations << std::endl;
 
-    std::string path_compute = resource_dir + "/shaders/Compute/compute.csh";
+    std::string path_compute = resource_dir + "/shaders/Compute/gaussian.csh";
     zexz::middle::Shader shader_compute(
       zexz::middle::ReadText(path_compute),
       zexz::middle::ShaderType_Compute
@@ -162,23 +164,20 @@ public:
     program_compute.link();
 
     // buffer
-    zexz::middle::GPUBuffer<float> inBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
-    inBuffer.map([&] (const auto* self, auto* data) {
-    });
-    zexz::middle::GPUBuffer<float> outBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
+    // generate texture for output
+    glGenTextures(1, &(data.texture_compute));
+    glBindTexture(GL_TEXTURE_2D, data.texture_compute);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, data.image_width, data.image_height);
+    // glClearTexImage(data.texture_compute, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     program_compute.use();
-    program_compute.bindBuffer(inBuffer, 0);
-    program_compute.bindBuffer(outBuffer, 1);
-    program_compute.compute(1, 1, 1);
+    program_compute.bindImageTexture("uImageSrc", data.texture);
+    program_compute.bindImageTexture("uImageOut", data.texture_compute);
+    program_compute.compute(data.image_width / 8 + 1, data.image_height / 8 + 1, 1);
     program_compute.unuse();
 
-    outBuffer.map([&](const auto* self, auto* data) {
-      std::cout << data[0] << ", "
-                << data[1] << ", "
-                << data[2] << ", "
-                << data[3] << std::endl;
-    });
+
 
     return true;
   }
@@ -230,7 +229,7 @@ public:
       textureMat = glm::translate(textureMat, glm::vec3(-0.5f, -0.5f, 0.0f));
       data.program->setMat4("uTexuvMat1", textureMat);
 
-      data.program->setTexture("uBitmap1", data.texture, 0);
+      data.program->setTexture("uBitmap1", data.texture_compute, 0);
 
       data.program->setFloat("uTextureWidth1", (float)data.image_width);
       data.program->setFloat("uTextureHeight1", (float)data.image_height);

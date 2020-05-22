@@ -27,3 +27,18 @@ target_link_libraries(4.Compute_class
   stb
   zexz
 )
+
+add_executable(4.Compute_gaussian
+  main_gaussian.cpp
+)
+target_link_libraries(4.Compute_gaussian
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
