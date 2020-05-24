@@ -171,6 +171,7 @@ public:
     program_compute.bindBuffer(inBuffer, 0);
     program_compute.bindBuffer(outBuffer, 1);
     program_compute.compute(1, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     program_compute.unuse();
 
     outBuffer.map([&](const auto* self, auto* data) {

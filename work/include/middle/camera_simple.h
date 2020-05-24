@@ -26,6 +26,7 @@ public:
   void onMouseButton(const SDL_Event* event);
   void onKeyButton(const SDL_Event* event);
   void onMouseWheel(const SDL_Event* event);
+  void onSizeChanged(const SDL_Event* event);
 
 public:
   int window_width;

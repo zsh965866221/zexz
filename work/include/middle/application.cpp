@@ -142,6 +142,9 @@ bool Application::run() {
       }
     }
 
+    SDL_GetWindowSize(window, &window_width, &window_height);
+    glViewport(0, 0, window_width, window_height);
+
     // timer and frame
     time = timer.delta();
     frame++;

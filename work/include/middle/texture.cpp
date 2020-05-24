@@ -26,14 +26,21 @@ GLuint load_texture(
   GLuint texID;
   glGenTextures(1, &texID);
   glBindTexture(GL_TEXTURE_2D, texID);
+  glTexStorage2D(
+    GL_TEXTURE_2D,
+    1, 
+    GL_RGBA32F,
+    *width,
+    *height
+  );
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexImage2D(
+  glTexSubImage2D(
     GL_TEXTURE_2D,
     0,
-    GL_RGB,
+    0,
+    0,
     *width,
     *height,
-    0,
     GL_RGB,
     GL_UNSIGNED_BYTE,
     buffer);

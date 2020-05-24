@@ -7,9 +7,15 @@
 #include "middle/texture.h"
 #include "middle/utils.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include <iostream>
 
 namespace zsh = zexz;
+using namespace zexz;
+using namespace zexz::middle;
+using namespace zexz::utils;
 
 class SimpleApplication: public zsh::middle::Application {
 private:
@@ -48,23 +54,6 @@ private:
     GLuint IBO;
   };
 
-  struct CameraStruct {
-    CameraStruct():
-      distance(0.0f),
-      mousePosition(glm::vec2(0.0f, 0.0f)),
-      midPressed(false),
-      mouseMidStart(glm::vec2(0.0f, 0.0f)),
-      mouseMidOffset(glm::vec2(0.0f, 0.0f)),
-      mouseMidOffsetTmp(glm::vec2(0.0f, 0.0f)) {
-    }
-
-    float distance;
-    glm::vec2 mousePosition;
-    bool midPressed;
-    glm::vec2 mouseMidStart;
-    glm::vec2 mouseMidOffset;
-    glm::vec2 mouseMidOffsetTmp;
-  };
 
 public:
   SimpleApplication(): Application(
@@ -85,6 +74,7 @@ public:
       &(data.image_width), 
       &(data.image_height),
       &(data.image_channels));
+    CHECK_GL_ERROR();
     // shader
     zexz::middle::Shader shader_vertex(zexz::middle::ReadText(path_vertex), zexz::middle::ShaderType_Vertex);
     shader_vertex.complie();
@@ -167,18 +157,61 @@ public:
     // generate texture for output
     glGenTextures(1, &(data.texture_compute));
     glBindTexture(GL_TEXTURE_2D, data.texture_compute);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, data.image_width, data.image_height);
-    // glClearTexImage(data.texture_compute, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexStorage2D(
+      GL_TEXTURE_2D,
+      1, 
+      GL_RGBA32F,
+      data.image_width,
+      data.image_height
+    );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    CHECK_GL_ERROR();
+    // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
+    // glTexImage2D(
+    //   GL_TEXTURE_2D,
+    //   0, 
+    //   GL_RGBA32F,
+    //   data.image_width,
+    //   data.image_height,
+    //   0,
+    //   GL_RGBA,
+    //   GL_FLOAT,
+    //   0
+    // );
+    CHECK_GL_ERROR();
     glBindTexture(GL_TEXTURE_2D, 0);
-
+    CHECK_GL_ERROR();
     program_compute.use();
-    program_compute.bindImageTexture("uImageSrc", data.texture);
-    program_compute.bindImageTexture("uImageOut", data.texture_compute);
-    program_compute.compute(data.image_width / 8 + 1, data.image_height / 8 + 1, 1);
+    program_compute.bindImageTexture(
+      "uImageIn", 
+      0, 
+      data.texture, 
+      0,
+      GL_FALSE,
+      0,
+      GL_READ_WRITE,
+      GL_RGBA32F
+    );
+    CHECK_GL_ERROR();
+    program_compute.bindImageTexture(
+      "uImageOut", 
+      1, 
+      data.texture_compute, 
+      0,
+      GL_FALSE,
+      0,
+      GL_READ_WRITE,
+      GL_RGBA32F
+    );
+    CHECK_GL_ERROR();
+    program_compute.compute(data.image_width, data.image_height, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    CHECK_GL_ERROR();
     program_compute.unuse();
-
-
-
+    CHECK_GL_ERROR();
     return true;
   }
 
@@ -242,6 +275,7 @@ public:
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+      CHECK_GL_ERROR();
       data.program->unuse();
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -259,7 +293,6 @@ public:
 
   bool onEvent(const SDL_Event* event) {
     camera->onEvent(event);
-
     return true;
   }
 

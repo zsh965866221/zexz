@@ -1,20 +1,38 @@
-#version 430
+#version 320 es
 precision highp float;
 precision highp int;
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(rgba32f) readonly highp uniform image2D uImageSrc;
-layout(rgba32f) writeonly highp uniform image2D uImageOut;
+layout(rgba32f) highp uniform image2D uImageIn;
+layout(rgba32f) highp uniform image2D uImageOut;
+
+const float sigma = 2.0;
 
 void main(void) {
   ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-  ivec2 size = imageSize(uImageSrc);
-
+  ivec2 size = imageSize(uImageOut);
   if (id.x >= size.x || id.y >= size.y) {
     return;
   }
 
-  vec4 Color = imageLoad(uImageSrc, id);
-  imageStore(uImageOut, id, Color);
+  // 0.9544
+  int kernel = int(ceil(2.0 * sigma));
+
+  vec4 pixel = vec4(0.0);
+  float coef = 0.0;
+  for (int dx = -kernel; dx <= kernel; dx++) {
+    for (int dy = -kernel; dy <= kernel; dy++) {
+      int x = id.x + dx;
+      int y = id.y + dy;
+      if (x < 0 || x >= size.x ||
+          y < 0 || y >= size.y) {
+        continue;
+      }
+      float c = exp(-float(dx * dx + dy * dy) / (2.0 * sigma * sigma));
+      pixel += (imageLoad(uImageIn, ivec2(x, y)) * c);
+      coef += c;
+    }
+  }
+  imageStore(uImageOut, id, pixel / (coef + 1e-5));
 }

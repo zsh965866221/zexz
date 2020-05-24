@@ -70,6 +70,12 @@ void SimpleCamera::onMouseWheel(const SDL_Event* event) {
   distance += ((float)event->wheel.y * 0.1f);
 }
 
+void SimpleCamera::onSizeChanged(const SDL_Event* event) {
+  int width = event->window.data1;
+  int height = event->window.data2;
+  aspect = float(width) / float(height);
+}
+
 void SimpleCamera::onEvent(const SDL_Event* event) {
   switch (event->type) {
   case SDL_MOUSEMOTION:
@@ -90,6 +96,10 @@ void SimpleCamera::onEvent(const SDL_Event* event) {
   case SDL_MOUSEWHEEL:
     onMouseWheel(event);
     break;
+  case SDL_WINDOWEVENT:
+    if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+      onSizeChanged(event);
+    }
   default:
     break;
   }

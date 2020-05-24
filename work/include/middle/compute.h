@@ -34,15 +34,6 @@ public:
 
   void bindImageTexture(
     const std::string& name,
-    const GLuint texture,
-    const GLint level = 0,
-    const GLboolean layered = false,
-    const GLint layer = 0,
-    const GLenum access = GL_READ_WRITE,
-    const GLenum format = GL_RGBA
-  ) const;
-
-  void bindImageTexture(
     const GLuint unit,
     const GLuint texture,
     const GLint level = 0,

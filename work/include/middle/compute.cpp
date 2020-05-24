@@ -2,6 +2,8 @@
 
 #include "glog/logging.h"
 
+#include "middle/utils.h"
+
 namespace zexz {
 namespace middle {
 
@@ -18,26 +20,6 @@ void ComputeProgram::compute(
 
 void ComputeProgram::bindImageTexture(
   const std::string& name,
-  const GLuint texture,
-  const GLint level,
-  const GLboolean layered,
-  const GLint layer,
-  const GLenum access,
-  const GLenum format
-) const {
-  GLuint location = glGetUniformLocation(ID, name.c_str());
-  glBindImageTexture(
-    location,
-    texture,
-    level,
-    layered,
-    layer,
-    access,
-    format
-  );
-}
-
-void ComputeProgram::bindImageTexture(
   const GLuint unit,
   const GLuint texture,
   const GLint level,
@@ -46,6 +28,9 @@ void ComputeProgram::bindImageTexture(
   const GLenum access,
   const GLenum format
 ) const {
+  glActiveTexture(GL_TEXTURE0 + unit);
+  CHECK_GL_ERROR();
+  glBindTexture(GL_TEXTURE_2D, texture);
   glBindImageTexture(
     unit,
     texture,
@@ -55,7 +40,11 @@ void ComputeProgram::bindImageTexture(
     access,
     format
   );
+  CHECK_GL_ERROR();
+  glUniform1i(glGetUniformLocation(ID, name.c_str()), unit);
+  CHECK_GL_ERROR();
 }
+
 
 } // namespace middle
 } // namespace zexz
