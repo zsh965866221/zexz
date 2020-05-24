@@ -2,7 +2,7 @@
 precision highp float;
 precision highp int;
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(rgba32f) highp uniform image2D uImageIn;
 layout(rgba32f) highp uniform image2D uImageOut;

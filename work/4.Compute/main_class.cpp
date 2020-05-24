@@ -164,6 +164,10 @@ public:
     // buffer
     zexz::middle::GPUBuffer<float> inBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
     inBuffer.map([&] (const auto* self, auto* data) {
+      data[0] = 1.0f;
+      data[1] = 2.0f;
+      data[2] = 3.0f;
+      data[3] = 4.0f;
     });
     zexz::middle::GPUBuffer<float> outBuffer(zexz::middle::GPUBufferType_SHADER_STORAGE, 4);
 
