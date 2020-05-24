@@ -25,15 +25,20 @@ private:
       Swivel(0.0f),
       Tilt(0.0f),
       Distance(0.0f),
-      Specular(false) {}
+      Specular(false),
+      sigma(0.0f) {}
       float Swivel;
       float Tilt;
       float Distance;
       bool Specular;
+
+      // compute 
+      float sigma;
   };
   struct Data {
     Data():
       program(nullptr),
+      program_compute(nullptr),
       texture(0),
       texture_compute(0),
       image_width(0),
@@ -44,6 +49,7 @@ private:
       IBO(0) {
     }
     std::unique_ptr<zexz::middle::Program> program;
+    std::unique_ptr<zexz::middle::ComputeProgram> program_compute;
     GLuint texture;
     GLuint texture_compute;
     int image_width;
@@ -149,9 +155,9 @@ public:
     );
     shader_compute.complie();
 
-    zexz::middle::ComputeProgram program_compute;
-    program_compute.attach(shader_compute);
-    program_compute.link();
+    data.program_compute.reset(new zexz::middle::ComputeProgram());
+    data.program_compute->attach(shader_compute);
+    data.program_compute->link();
 
     // buffer
     // generate texture for output
@@ -168,50 +174,9 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    CHECK_GL_ERROR();
-    // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
-    // glTexImage2D(
-    //   GL_TEXTURE_2D,
-    //   0, 
-    //   GL_RGBA32F,
-    //   data.image_width,
-    //   data.image_height,
-    //   0,
-    //   GL_RGBA,
-    //   GL_FLOAT,
-    //   0
-    // );
-    CHECK_GL_ERROR();
     glBindTexture(GL_TEXTURE_2D, 0);
     CHECK_GL_ERROR();
-    program_compute.use();
-    program_compute.bindImageTexture(
-      "uImageIn", 
-      0, 
-      data.texture, 
-      0,
-      GL_FALSE,
-      0,
-      GL_READ_WRITE,
-      GL_RGBA32F
-    );
-    CHECK_GL_ERROR();
-    program_compute.bindImageTexture(
-      "uImageOut", 
-      1, 
-      data.texture_compute, 
-      0,
-      GL_FALSE,
-      0,
-      GL_READ_WRITE,
-      GL_RGBA32F
-    );
-    CHECK_GL_ERROR();
-    program_compute.compute(data.image_width, data.image_height, 1);
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
-    CHECK_GL_ERROR();
-    program_compute.unuse();
-    CHECK_GL_ERROR();
+
     return true;
   }
 
@@ -226,6 +191,14 @@ public:
     ImGui::Checkbox("Specular Highlight", &(ui.Specular));
     ImGui::End();
 
+    ImGui::Begin("Compute Shader");
+    ImGui::SliderFloat("Sigma", &(ui.sigma), 0.0f, 4.0f);
+    ImGui::End();
+
+    ImGui::Begin("Info");
+    ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
+    ImGui::End();
+
     // help
     ImGui::Begin("Help");
     ImGui::Text("1. Mouse Scroll for Scale.");
@@ -238,15 +211,44 @@ public:
   bool onDraw() {
     CHECK_NOTNULL(data.program);
 
-    { // draw main
+    { // compute shader
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glViewport(0, 0, window_width, window_height);
       glEnable(GL_DEPTH_TEST);
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      data.program->use();
+      // compute shader
+      data.program_compute->use();
+      data.program_compute->setFloat("uSigma", ui.sigma);
+      data.program_compute->bindImageTexture(
+        "uImageIn", 
+        0, 
+        data.texture, 
+        0,
+        GL_FALSE,
+        0,
+        GL_READ_WRITE,
+        GL_RGBA32F
+      );
+      data.program_compute->bindImageTexture(
+        "uImageOut", 
+        1, 
+        data.texture_compute, 
+        0,
+        GL_FALSE,
+        0,
+        GL_READ_WRITE,
+        GL_RGBA32F
+      );
+      data.program_compute->compute(data.image_width / 16 + 1, data.image_height / 16 + 1, 1);
+      glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+      data.program_compute->unuse();
+      CHECK_GL_ERROR();
+    }
 
+    { // draw
+      data.program->use();
       // MVP
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::scale(model, glm::vec3(1.0, (float)(data.image_height)/ (float)(data.image_width), 1.0));
