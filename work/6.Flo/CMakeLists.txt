@@ -1,0 +1,14 @@
+add_executable(6.Flo
+  main.cpp
+)
+target_link_libraries(6.Flo
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
