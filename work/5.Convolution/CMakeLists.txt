@@ -1,0 +1,14 @@
+add_executable(5.Convolution
+  main.cpp
+)
+target_link_libraries(5.Convolution
+  gflags
+  glad
+  glfw
+  glog
+  imgui
+  imgui_glfw_ogl
+  middle
+  stb
+  zexz
+)
