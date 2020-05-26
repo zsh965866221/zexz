@@ -143,6 +143,10 @@ public:
     ImGui::Checkbox("Specular Highlight", &(ui.Specular));
     ImGui::End();
 
+    ImGui::Begin("Info");
+    ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
+    ImGui::End();
+
     // help
     ImGui::Begin("Help");
     ImGui::Text("1. Mouse Scroll for Scale.");
