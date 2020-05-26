@@ -26,8 +26,10 @@ vec2 getDeltaByCenter(vec2 xy, vec2 center, float amount) {
 		float r = length(uv);
 		float theta = atan(uv.y, uv.x);
 
-		float b = uFalloff * uFalloff;
+		/** \brief Reference to https://www.desmos.com/calculator/xeev1ye4qd */
 
+		float b = uFalloff * uFalloff;
+		
 		float f = r + (amount * (1.0 + 20.0 * sqrt(b)) / r) * (tanh(r * r / b / b / 40.0) / exp(r));
 		r = f;
 
