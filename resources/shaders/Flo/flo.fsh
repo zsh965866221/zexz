@@ -10,6 +10,8 @@ uniform vec2 uCenter1;
 uniform float uAmount2;
 uniform vec2 uCenter2;
 
+uniform float uFalloff;
+
 uniform float uTextureWidth1;
 uniform float uTextureHeight1;
 
@@ -24,7 +26,7 @@ vec2 getDeltaByCenter(vec2 xy, vec2 center, float amount) {
 		float r = length(uv);
 		float theta = atan(uv.y, uv.x);
 
-		float f = r + amount / (r * 10.0);
+		float f = r + amount * (exp(-uFalloff / sqrt(r))) / (r * 10.0);
 		r = f;
 
 		uv.x = r * cos(theta);

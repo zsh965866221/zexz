@@ -17,11 +17,13 @@ private:
       Amount1(0.0),
       Center1(glm::vec2(0.0f, 0.0f)),
       Amount2(0.0),
-      Center2(glm::vec2(0.0f, 0.0f)) {}
+      Center2(glm::vec2(0.0f, 0.0f)),
+      Falloff(0.0f) {}
     float Amount1;
     glm::vec2 Center1;
     float Amount2;
     glm::vec2 Center2;
+    float Falloff;
   };
   struct Data {
     Data():
@@ -125,6 +127,7 @@ public:
     ImGui::DragFloat2("Knot 1", &(ui.Center1[0]));
     ImGui::DragFloat("Amount 2", &(ui.Amount2), 0.01f);
     ImGui::DragFloat2("Knot 2", &(ui.Center2[0]));
+    ImGui::SliderFloat("Falloff", &(ui.Falloff), 0.0f, 4.0f);
     ImGui::End();
 
     // help
@@ -143,6 +146,8 @@ public:
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glViewport(0, 0, window_width, window_height);
       glEnable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
+      glDepthFunc(GL_LESS);
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -173,6 +178,7 @@ public:
       data.program->setVec2("uCenter1", ui.Center1);
       data.program->setFloat("uAmount2", ui.Amount2);
       data.program->setVec2("uCenter2", ui.Center2);
+      data.program->setFloat("uFalloff", ui.Falloff);
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
