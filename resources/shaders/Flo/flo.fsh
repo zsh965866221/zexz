@@ -26,7 +26,9 @@ vec2 getDeltaByCenter(vec2 xy, vec2 center, float amount) {
 		float r = length(uv);
 		float theta = atan(uv.y, uv.x);
 
-		float f = r + amount * (exp(-uFalloff / sqrt(r))) / (r * 10.0);
+		float b = uFalloff * uFalloff;
+
+		float f = r + (amount * (1.0 + 20.0 * sqrt(b)) / r) * (tanh(r * r / b / b / 40.0) / exp(r));
 		r = f;
 
 		uv.x = r * cos(theta);

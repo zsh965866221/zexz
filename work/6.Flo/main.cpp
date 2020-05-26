@@ -127,7 +127,7 @@ public:
     ImGui::DragFloat2("Knot 1", &(ui.Center1[0]));
     ImGui::DragFloat("Amount 2", &(ui.Amount2), 0.01f);
     ImGui::DragFloat2("Knot 2", &(ui.Center2[0]));
-    ImGui::SliderFloat("Falloff", &(ui.Falloff), 0.0f, 4.0f);
+    ImGui::DragFloat("Falloff", &(ui.Falloff), 0.01f, 0.0f, 4.0f);
     ImGui::End();
 
     // help
