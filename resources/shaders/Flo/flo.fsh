@@ -26,15 +26,15 @@ vec2 getDeltaByCenter(vec2 xy, vec2 center, float amount) {
 		float r = length(uv);
 		float theta = atan(uv.y, uv.x);
 
-		/** \brief Reference to https://www.desmos.com/calculator/xeev1ye4qd */
+		/** \brief Reference to https://www.desmos.com/calculator/mo5rb1gccf */
 
-		float b = uFalloff * uFalloff;
-		
-		float f = r + (amount * (1.0 + 20.0 * sqrt(b)) / r) * (tanh(r * r / b / b / 40.0) / exp(r));
-		r = f;
+		float b = pow(uFalloff, 4.0);
 
-		uv.x = r * cos(theta);
-		uv.y = r * sin(theta);
+		float coef = tanh(pow(r, 2.0) / b) / (1.0 + b * exp(pow(r, b))) * (1.0 + 4.0 * uFalloff);
+		float f = amount / r * coef + r;
+
+		uv.x = f * cos(theta);
+		uv.y = f * sin(theta);
 	}
 
 	vec2 nxy = uv + (center - 0.5) * 2.0;

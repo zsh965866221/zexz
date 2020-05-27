@@ -146,8 +146,6 @@ public:
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glViewport(0, 0, window_width, window_height);
       glEnable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      glDepthFunc(GL_LESS);
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
