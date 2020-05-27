@@ -9,6 +9,10 @@
 
 namespace zsh = zexz;
 
+std::string ResourceDir = zsh::utils::getResourcesDir();
+
+DEFINE_string(image, ResourceDir + "/images/f.jpg", "Image");
+
 class SimpleApplication: public zsh::middle::Application {
 private:
   // Struct
@@ -18,12 +22,16 @@ private:
       Center1(glm::vec2(0.0f, 0.0f)),
       Amount2(0.0),
       Center2(glm::vec2(0.0f, 0.0f)),
-      Falloff(0.0f) {}
+      Falloff(0.0f),
+      TileEdges(false),
+      FinerControls(false) {}
     float Amount1;
     glm::vec2 Center1;
     float Amount2;
     glm::vec2 Center2;
     float Falloff;
+    bool TileEdges;
+    bool FinerControls;
   };
   struct Data {
     Data():
@@ -57,12 +65,11 @@ public:
 public:
   bool onInit() {
     // args
-    std::string path_image = resource_dir + "/images/grid.jpg";
     std::string path_vertex = resource_dir + "/shaders/Flo/flo.vsh";
     std::string path_fragment = resource_dir + "/shaders/Flo/flo.fsh";
     // texture
     data.texture = zexz::middle::load_texture(
-      path_image,
+      FLAGS_image,
       &(data.image_width), 
       &(data.image_height),
       &(data.image_channels));
@@ -123,11 +130,19 @@ public:
 
   bool onGUI() {
     ImGui::Begin("Flo");
+    if (ImGui::Button("Reset") == true) {
+      ui = UI();
+      // init gui
+      ui.Center1 = glm::vec2((float)data.image_width / 4.0f, (float)data.image_height / 4.0f);
+      ui.Center2 = glm::vec2((float)data.image_width / 4.0f * 3.0f, (float)data.image_height / 4.0f * 3.0f);
+    }
+    ImGui::Checkbox("uFinerControls", &(ui.FinerControls));
     ImGui::DragFloat("Amount 1", &(ui.Amount1), 0.01f);
     ImGui::DragFloat2("Knot 1", &(ui.Center1[0]));
     ImGui::DragFloat("Amount 2", &(ui.Amount2), 0.01f);
     ImGui::DragFloat2("Knot 2", &(ui.Center2[0]));
-    ImGui::DragFloat("Falloff", &(ui.Falloff), 0.01f, 0.0f, 4.0f);
+    ImGui::Checkbox("Tile Edges", &(ui.TileEdges));
+    ImGui::DragFloat("Falloff", &(ui.Falloff), 0.01f, 0.0f, 3.0f);
     ImGui::End();
 
     // help
@@ -176,7 +191,9 @@ public:
       data.program->setVec2("uCenter1", ui.Center1);
       data.program->setFloat("uAmount2", ui.Amount2);
       data.program->setVec2("uCenter2", ui.Center2);
+      data.program->setBool("uTileEdges", ui.TileEdges);
       data.program->setFloat("uFalloff", ui.Falloff);
+      data.program->setBool("uFinerControls", ui.FinerControls);
 
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
