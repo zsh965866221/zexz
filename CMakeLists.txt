@@ -30,7 +30,7 @@ endif()
 # libs
 if(WIN32)
   set(OGL opengl32)
-elseif(UNIX AND NOT APPLE)
+elseif(UNIX AND NOT APPLE AND NOT ANDROID)
   find_package(OpenGL REQUIRED)
   set(OGL GL)
 elseif(APPLE)
