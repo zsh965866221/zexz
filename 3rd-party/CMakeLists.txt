@@ -1,6 +1,5 @@
 add_subdirectory(filesystem)
 add_subdirectory(gflags)
-add_subdirectory(glfw)
 add_subdirectory(glm)
 # set glog
 set(CXX_FLAGS
