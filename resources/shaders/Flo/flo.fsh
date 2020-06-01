@@ -31,16 +31,13 @@ vec2 getDeltaByCenter(vec2 xy, vec2 center, float amount) {
 
 		float x = r;
 		if (uFinerControls == true) {
-			x *= 100.0;
+			x *= 50.0;
 		}
 
 		/** \brief Reference to https://www.desmos.com/calculator/ibiriw1tnm */
-		float b = pow(uFalloff, 4.0);
+		float b = pow(uFalloff / 1.2, 8.0);
 
-		float coef = tanh(pow(x, 2.0) / b) / (1.0 + b * exp(pow(x / 2.0, b))) * (1.0 + 4.0 * log(uFalloff + 1.0));
-		if (uFalloff > 3.0 - epsilon) {
-			coef = 0.0;
-		}
+		float coef = tanh(pow(x, 2.0) / b) / (1.0 + b * exp(pow(x / 5.0, b))) * (1.0 + 10.0 * log(pow(uFalloff, 2.0) / 2.0 + 1.0));
 		float f = amount / x * coef + r;
 
 		uv.x = f * cos(theta);

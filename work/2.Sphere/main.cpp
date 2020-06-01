@@ -117,14 +117,14 @@ public:
     glEnableVertexAttribArray(1);
 
     // init gui
-    ui.Center = glm::vec2((float)data.image_width / 2.0, (float)data.image_height / 2.0);
+    ui.Center = glm::vec2((float)data.image_width / 2.0f, (float)data.image_height / 2.0f);
 
     return true;
   }
 
   bool onGUI() {
     ImGui::Begin("Shperize");
-    ImGui::SliderFloat("Radius", &(ui.Radius), 0.0f, float(data.image_width) / 2.0f);
+    ImGui::SliderFloat("Radius", &(ui.Radius), 0.0f, (float)data.image_width / 2.0f);
     ImGui::DragFloat2("Center of Shpere", &(ui.Center[0]));
     ImGui::End();
 
@@ -182,8 +182,8 @@ public:
       data.program->setFloat("uTextureHeight1", (float)data.image_height);
 
       // parameter
-      data.program->setFloat("uRadius", ui.Radius);
-      data.program->setVec2("uCenter", ui.Center);
+      data.program->setFloat("uRadius", ui.Radius / data.image_width);
+      data.program->setVec2("uCenter", ui.Center / glm::vec2(data.image_width, data.image_height));
   
       glBindVertexArray(data.VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

@@ -11,7 +11,7 @@ namespace zsh = zexz;
 
 std::string ResourceDir = zsh::utils::getResourcesDir();
 
-DEFINE_string(image, ResourceDir + "/images/f.jpg", "Image");
+DEFINE_string(image, ResourceDir + "/images/grid.jpg", "Image");
 
 class SimpleApplication: public zsh::middle::Application {
 private:
@@ -137,9 +137,9 @@ public:
       ui.Center2 = glm::vec2((float)data.image_width / 4.0f * 3.0f, (float)data.image_height / 4.0f * 3.0f);
     }
     ImGui::Checkbox("uFinerControls", &(ui.FinerControls));
-    ImGui::DragFloat("Amount 1", &(ui.Amount1), 0.01f);
+    ImGui::DragFloat("Amount 1", &(ui.Amount1), 0.1f);
     ImGui::DragFloat2("Knot 1", &(ui.Center1[0]));
-    ImGui::DragFloat("Amount 2", &(ui.Amount2), 0.01f);
+    ImGui::DragFloat("Amount 2", &(ui.Amount2), 0.1f);
     ImGui::DragFloat2("Knot 2", &(ui.Center2[0]));
     ImGui::Checkbox("Tile Edges", &(ui.TileEdges));
     ImGui::DragFloat("Falloff", &(ui.Falloff), 0.01f, 0.0f, 3.0f);
@@ -187,9 +187,9 @@ public:
       data.program->setFloat("uTextureHeight1", (float)data.image_height);
 
       // uniform
-      data.program->setFloat("uAmount1", ui.Amount1);
+      data.program->setFloat("uAmount1", ui.Amount1 / 100.0f * 0.15f);
       data.program->setVec2("uCenter1", ui.Center1);
-      data.program->setFloat("uAmount2", ui.Amount2);
+      data.program->setFloat("uAmount2", ui.Amount2 / 100.0f * 0.15f);
       data.program->setVec2("uCenter2", ui.Center2);
       data.program->setBool("uTileEdges", ui.TileEdges);
       data.program->setFloat("uFalloff", ui.Falloff);
